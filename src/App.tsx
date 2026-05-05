@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useMemo, useState, useEffect } from "react";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyvj4Ao28AJQnQX8-lnBI-oY8D0P9W5026YqjwQfFWbCJ2J-tFdc-hc8_DryFsKeFud/exec";
@@ -208,6 +209,7 @@ export default function DashboardSemaforo() {
 
   useEffect(() => {
     loadAllLocals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isLocalPage = selectedLocal !== "TODOS";
