@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState, useEffect } from "react";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyvj4Ao28AJQnQX8-lnBI-oY8D0P9W5026YqjwQfFWbCJ2J-tFdc-hc8_DryFsKeFud/exec";
@@ -143,7 +142,7 @@ function HealthBar({ summary }) {
 }
 
 export default function DashboardSemaforo() {
-  const [localsData, setLocalsData] = useState([]);
+  const [localsData, setLocalsData] = useState<any[]>([]);
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
   const [activeView, setActiveView] = useState("RESUMEN");
   const [assetCategory, setAssetCategory] = useState("TODOS");
@@ -151,7 +150,7 @@ export default function DashboardSemaforo() {
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("Cargando datos iniciales...");
   const [search, setSearch] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
 
   async function fetchJson(url) {
     const response = await fetch(url, { method: "GET", redirect: "follow" });
@@ -467,7 +466,7 @@ export default function DashboardSemaforo() {
                           <td style={{ color: getTone(asset.estado).color, fontWeight: 900 }}>{asset.estado}</td>
                         </tr>
                       ))}
-                      {!filteredAssets.length ? <tr><td colSpan="4">Sin datos para mostrar.</td></tr> : null}
+                      {!filteredAssets.length ? <tr><td colSpan={4}>Sin datos para mostrar.</td></tr> : null}
                     </tbody>
                   </table>
                 </div>
