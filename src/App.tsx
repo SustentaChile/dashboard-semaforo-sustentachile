@@ -287,9 +287,9 @@ export default function DashboardSemaforo() {
     <div className="app">
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; }
+        body { margin: 0; background: #05070d; }
         .app { min-height: 100vh; background: #05070d; color: white; font-family: Arial, Helvetica, sans-serif; }
-        .page { max-width: 1500px; margin: 0 auto; padding: 28px; }
+        .page { width: 100%; max-width: none; margin: 0; padding: 28px; }
         .header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 22px; }
         .brand { display: flex; align-items: center; gap: 14px; }
         .logo { width: 54px; height: 54px; border-radius: 19px; background: rgba(0,217,255,.12); color: #27dfff; display: grid; place-items: center; font-size: 28px; }
