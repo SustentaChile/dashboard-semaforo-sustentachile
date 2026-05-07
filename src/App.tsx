@@ -560,30 +560,24 @@ export default function DashboardSemaforo() {
               <table>
                 <thead>
                   <tr>
-
                     <th>PPTO</th>
 
-                    {pptoView === "ENVIADOS" && (
-                        <th>Fecha PPTO</th>
-                    )}
+                    {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
 
-                    {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") && (
+                    {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
                       <>
                         <th>Fecha OC</th>
                         <th>OC</th>
                       </>
-                    )}
+                    ) : null}
 
                     <th>Estado</th>
                     <th>Detalle</th>
 
-                    {pptoView === "EJECUTADOS" && (
-                      <th>Rep. ejecución</th>
-                    )}
-
+                    {pptoView === "EJECUTADOS" ? <th>Rep. ejecución</th> : null}
                   </tr>
                 </thead>
-                </thead>
+
                 <tbody>
                   {pptosList.map((ppto, index) => (
                     <tr
@@ -593,26 +587,23 @@ export default function DashboardSemaforo() {
                     >
                       <td>{ppto.ppto || "-"}</td>
 
-                      {pptoView === "ENVIADOS" && (
+                      {pptoView === "ENVIADOS" ? (
                         <td>{ppto.fechaPpto || "-"}</td>
-                      )}
+                      ) : null}
 
-                      {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") && (
+                      {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
                         <>
                           <td>{ppto.fechaOc || "-"}</td>
                           <td>{ppto.oc || "-"}</td>
                         </>
-                      )}
+                      ) : null}
 
-                      <td style={{ fontWeight: 900 }}>
-                        {ppto.estado || "-"}
-                      </td>
-
+                      <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
                       <td>{ppto.detalle || "-"}</td>
 
-                      {pptoView === "EJECUTADOS" && (
+                      {pptoView === "EJECUTADOS" ? (
                         <td>{ppto.reporteEjecucion || "-"}</td>
-                      )}
+                      ) : null}
                     </tr>
                   ))}
 
@@ -621,6 +612,39 @@ export default function DashboardSemaforo() {
                       <td colSpan={10}>No hay presupuestos en esta categoría.</td>
                     </tr>
                   ) : null}
+                </tbody>
+              </table>
+            ) : (
+              <div className="assetDetail">
+                <button className="backButton" onClick={() => setSelectedPpto(null)}>
+                  ← Volver al listado
+                </button>
+
+                <h2 className="assetTitle">{selectedPpto.ppto || "Sin PPTO"}</h2>
+                <div className="assetSubtitle">OC: {selectedPpto.oc || "Sin OC"}</div>
+
+                <div className="detailGrid">
+                  <div className="detailItem"><span>Local</span><b>{selectedPpto.codigo || ""} - {selectedPpto.local || "-"}</b></div>
+                  <div className="detailItem"><span>Estado</span><b>{selectedPpto.estado || "-"}</b></div>
+                  <div className="detailItem"><span>Fecha PPTO</span><b>{selectedPpto.fechaPpto || "-"}</b></div>
+                  <div className="detailItem"><span>Fecha OC</span><b>{selectedPpto.fechaOc || "-"}</b></div>
+                  <div className="detailItem"><span>Fecha ejecución</span><b>{selectedPpto.fechaEjecucion || "-"}</b></div>
+                  <div className="detailItem"><span>Reporte ejecución</span><b>{selectedPpto.reporteEjecucion || "-"}</b></div>
+                </div>
+
+                <div className="detailBox">
+                  <div className="panelTitle" style={{ textAlign: "left" }}>Detalle</div>
+                  <p>{selectedPpto.detalle || "Sin detalle registrado."}</p>
+                </div>
+
+                <div className="detailBox">
+                  <div className="panelTitle" style={{ textAlign: "left" }}>Materiales</div>
+                  <p>{selectedPpto.materiales || "Sin materiales registrados."}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
                 </tbody>
               </table>
             ) : (
