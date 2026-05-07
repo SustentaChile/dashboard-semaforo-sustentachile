@@ -65,11 +65,7 @@ function buildSummaryFromAssets(assets) {
 }
 
 function buildGlobalSummary(localsData) {
-  const list = (localsData || []).map((item) => ({
-    ...item,
-    summary: normalizeSummary(item.summary),
-  }));
-
+  const list = (localsData || []).map((item) => ({ ...item, summary: normalizeSummary(item.summary) }));
   const total = list.reduce((sum, item) => sum + (item.summary.total || 0), 0);
   const criticos = list.reduce((sum, item) => sum + (item.summary.criticos || 0), 0);
   const observados = list.reduce((sum, item) => sum + (item.summary.observados || 0), 0);
@@ -77,14 +73,7 @@ function buildGlobalSummary(localsData) {
   const rojos = list.filter((item) => item.summary.semaforo === "ROJO").length;
   const amarillos = list.filter((item) => item.summary.semaforo === "AMARILLO").length;
   const verdes = list.filter((item) => item.summary.semaforo === "VERDE").length;
-
-  return {
-    ...base,
-    locales: list.length,
-    verdes,
-    amarillos,
-    rojos,
-  };
+  return { ...base, locales: list.length, verdes, amarillos, rojos };
 }
 
 function getAssetCategory(asset) {
@@ -94,22 +83,10 @@ function getAssetCategory(asset) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-  if (text.includes("COMPRESOR") || text.includes("SEMI-HERMETICO") || text.includes("CENTRAL MEDIA") || text.includes("CENTRAL BAJA")) {
-    return "COMPRESORES";
-  }
-
-  if (text.includes("CONDENSADOR") || text.includes("VENTILADOR") || text.includes("AXIAL")) {
-    return "CONDENSADORES";
-  }
-
-  if (text.includes("AUTONOMA") || text.includes("AUTONOMO") || text.includes("AUTONOMAS")) {
-    return "AUTONOMAS";
-  }
-
-  if (text.includes("MUEBLE") || text.includes("MUEBLES") || text.includes("REMOTO") || text.includes("VITRINA") || text.includes("MURAL") || text.includes("EXHIBICION")) {
-    return "MUEBLES_REMOTOS";
-  }
-
+  if (text.includes("COMPRESOR") || text.includes("SEMI-HERMETICO") || text.includes("CENTRAL MEDIA") || text.includes("CENTRAL BAJA")) return "COMPRESORES";
+  if (text.includes("CONDENSADOR") || text.includes("VENTILADOR") || text.includes("AXIAL")) return "CONDENSADORES";
+  if (text.includes("AUTONOMA") || text.includes("AUTONOMO") || text.includes("AUTONOMAS")) return "AUTONOMAS";
+  if (text.includes("MUEBLE") || text.includes("MUEBLES") || text.includes("REMOTO") || text.includes("VITRINA") || text.includes("MURAL") || text.includes("EXHIBICION")) return "MUEBLES_REMOTOS";
   return "OTROS";
 }
 
@@ -128,7 +105,6 @@ function LocalButton({ local, onClick }) {
   return (
     <button type="button" className="localButton" onClick={onClick} style={{ borderColor: tone.border }}>
       <span>{local.local}</span>
-      
     </button>
   );
 }
@@ -144,19 +120,19 @@ function HealthBar({ summary }) {
 }
 
 export default function DashboardSemaforo() {
-  const [localsData, setLocalsData] = useState<any[]>([]);
+  const [localsData, setLocalsData] = useState([]);
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
-  const [pptosData, setPptosData] = useState([]);
-  const [pptosLoading, setPptosLoading] = useState(false);
-  const [pptoView, setPptoView] = useState("");
-  const [selectedPpto, setSelectedPpto] = useState(null);
   const [activeView, setActiveView] = useState("RESUMEN");
   const [assetCategory, setAssetCategory] = useState("TODOS");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("Cargando datos iniciales...");
   const [search, setSearch] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [pptosData, setPptosData] = useState([]);
+  const [pptosLoading, setPptosLoading] = useState(false);
+  const [pptoView, setPptoView] = useState("");
+  const [selectedPpto, setSelectedPpto] = useState(null);
 
   async function fetchJson(url) {
     const response = await fetch(url, { method: "GET", redirect: "follow" });
@@ -173,20 +149,15 @@ export default function DashboardSemaforo() {
     setLoading(true);
     setError("");
     setProgress("Buscando hojas del archivo...");
-
     try {
       const localsResponse = await fetchJson(makeUrl(url, { action: "locals" }));
       if (!localsResponse.ok) throw new Error(localsResponse.error || localsResponse.message || "No se pudo obtener la lista de locales.");
 
-      const sheetNames = (localsResponse.sheets || []).filter(
-        (name) => name && name !== "LogsAccesos" && name !== "BASE_EQUIPOS" && name !== "RESUMEN_LOCALES" && name !== "DASHBOARD"
-      );
-
+      const sheetNames = (localsResponse.sheets || []).filter((name) => name && name !== "LogsAccesos" && name !== "BASE_EQUIPOS" && name !== "RESUMEN_LOCALES" && name !== "DASHBOARD");
       if (!sheetNames.length) throw new Error("No se encontraron hojas/locales en el archivo.");
 
       const results = [];
       const failed = [];
-
       for (let i = 0; i < sheetNames.length; i++) {
         const sheet = sheetNames[i];
         setProgress(`Cargando ${i + 1} de ${sheetNames.length}: ${sheet}`);
@@ -200,7 +171,6 @@ export default function DashboardSemaforo() {
       }
 
       if (!results.length) throw new Error("No se pudo cargar ningún local.");
-
       setLocalsData(results);
       setProgress(`Locales cargados: ${results.length}${failed.length ? ` | Fallidos: ${failed.length}` : ""}`);
       if (failed.length) setError(`Algunos locales no cargaron: ${failed.slice(0, 3).join(" | ")}${failed.length > 3 ? "..." : ""}`);
@@ -211,30 +181,19 @@ export default function DashboardSemaforo() {
       setLoading(false);
     }
   }
+
   async function loadPptos(localName) {
-
     try {
-
       setPptosLoading(true);
-
-      const response = await fetch(
-        `${PPTOS_API}&local=${encodeURIComponent(localName)}`
-      );
-
-      const data = await response.json();
-
-      if (data.ok) {
-        setPptosData(data.pptos || []);
-      }
-
-    } catch (error) {
-
-      console.error("Error cargando PPTOS", error);
-
+      setPptosData([]);
+      setPptoView("");
+      setSelectedPpto(null);
+      const data = await fetchJson(`${PPTOS_API}&local=${encodeURIComponent(localName)}`);
+      if (data.ok) setPptosData(data.pptos || []);
+    } catch (err) {
+      console.error("Error cargando PPTOS", err);
     } finally {
-
       setPptosLoading(false);
-
     }
   }
 
@@ -242,31 +201,28 @@ export default function DashboardSemaforo() {
     loadAllLocals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
 
+  useEffect(() => {
     if (selectedLocal === "TODOS") {
       setPptosData([]);
+      setPptoView("");
+      setSelectedPpto(null);
       return;
     }
-
     loadPptos(selectedLocal);
-
-  }, [selectedLocal]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLocal]);
 
   const isLocalPage = selectedLocal !== "TODOS";
 
-  const selectedLocalData = useMemo(() => {
-    return localsData.find((item) => item.local === selectedLocal) || null;
-  }, [localsData, selectedLocal]);
+  const selectedLocalData = useMemo(() => localsData.find((item) => item.local === selectedLocal) || null, [localsData, selectedLocal]);
 
   const visibleLocals = useMemo(() => {
     if (selectedLocal === "TODOS") return localsData;
     return selectedLocalData ? [selectedLocalData] : [];
   }, [localsData, selectedLocal, selectedLocalData]);
 
-  const allAssets = useMemo(() => {
-    return visibleLocals.flatMap((local) => (local.assets || []).map((asset) => ({ ...asset, local: local.local })));
-  }, [visibleLocals]);
+  const allAssets = useMemo(() => visibleLocals.flatMap((local) => (local.assets || []).map((asset) => ({ ...asset, local: local.local }))), [visibleLocals]);
 
   const categoryAssets = useMemo(() => {
     if (assetCategory === "TODOS") return allAssets;
@@ -280,51 +236,32 @@ export default function DashboardSemaforo() {
 
   const filteredAssets = useMemo(() => {
     let list = categoryAssets;
-    if (activeView === "CATEGORIA") list = categoryAssets;
-    if (activeView === "ACTIVOS") list = categoryAssets;
     if (activeView === "OPERATIVOS") list = categoryAssets.filter((asset) => asset.estado !== "FALLA CRITICA");
     if (activeView === "OBSERVADOS") list = categoryAssets.filter((asset) => asset.estado === "OBSERVADO");
     if (activeView === "CRITICOS") list = categoryAssets.filter((asset) => asset.estado === "FALLA CRITICA");
-
     const q = search.trim().toLowerCase();
     if (!q) return list;
     return list.filter((asset) => Object.values(asset).join(" ").toLowerCase().includes(q));
   }, [categoryAssets, activeView, search]);
 
   const categoryLabel = CATEGORIES.find((cat) => cat.id === assetCategory)?.label || "Activos";
+  const detailTitle = activeView === "CATEGORIA" ? `Listado de ${categoryLabel.toLowerCase()}` : activeView === "ACTIVOS" ? "Listado de activos totales" : activeView === "OPERATIVOS" ? "Listado de equipos operativos" : activeView === "OBSERVADOS" ? "Listado de equipos observados" : activeView === "CRITICOS" ? "Listado de fallas críticas" : "";
 
-  const detailTitle = activeView === "CATEGORIA"
-    ? `Listado de ${categoryLabel.toLowerCase()}`
-    : activeView === "ACTIVOS"
-      ? "Listado de activos totales"
-    : activeView === "OPERATIVOS"
-      ? "Listado de equipos operativos"
-      : activeView === "OBSERVADOS"
-        ? "Listado de equipos observados"
-        : activeView === "CRITICOS"
-          ? "Listado de fallas críticas"
-          : "";
-  const presupuestosEnviados = useMemo(() => {
-    return pptosData.filter((p) => {
-      const estado = String(p.estado || "").toUpperCase().trim();
-      return estado === "ENVIADO";
-    });
-  }, [pptosData]);
+  const presupuestosEnviados = useMemo(() => pptosData.filter((p) => String(p.estado || "").toUpperCase().trim() === "ENVIADO"), [pptosData]);
+  const presupuestosAprobados = useMemo(() => pptosData.filter((p) => {
+    const estado = String(p.estado || "").toUpperCase().trim();
+    return estado === "PENDIENTE" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
+  }), [pptosData]);
+  const presupuestosEjecutados = useMemo(() => pptosData.filter((p) => String(p.estado || "").toUpperCase().trim() === "EJECUTADO"), [pptosData]);
 
-  const presupuestosAprobados = useMemo(() => {
-    return pptosData.filter((p) => {
-      const estado = String(p.estado || "").toUpperCase().trim();
-      return estado === "PENDIENTE" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
-    });
-  }, [pptosData]);
+  const pptosList = useMemo(() => {
+    if (pptoView === "ENVIADOS") return presupuestosEnviados;
+    if (pptoView === "APROBADOS") return presupuestosAprobados;
+    if (pptoView === "EJECUTADOS") return presupuestosEjecutados;
+    return [];
+  }, [pptoView, presupuestosEnviados, presupuestosAprobados, presupuestosEjecutados]);
 
-  const presupuestosEjecutados = useMemo(() => {
-    return pptosData.filter((p) => {
-      const estado = String(p.estado || "").toUpperCase().trim();
-      return estado === "EJECUTADO";
-    });
-  }, [pptosData]);
-  
+  const pptoTitle = pptoView === "ENVIADOS" ? "Presupuestos enviados" : pptoView === "APROBADOS" ? "Presupuestos aprobados" : pptoView === "EJECUTADOS" ? "Presupuestos ejecutados" : "";
   const semaforoGeneral = summary.criticos > 0 ? "ROJO" : summary.observados > 0 ? "AMARILLO" : "VERDE";
   const semTone = getTone(semaforoGeneral);
 
@@ -334,6 +271,8 @@ export default function DashboardSemaforo() {
     setAssetCategory("TODOS");
     setSearch("");
     setSelectedAsset(null);
+    setSelectedPpto(null);
+    setPptoView("");
   }
 
   function goBack() {
@@ -342,19 +281,9 @@ export default function DashboardSemaforo() {
     setAssetCategory("TODOS");
     setSearch("");
     setSelectedAsset(null);
+    setSelectedPpto(null);
+    setPptoView("");
   }
-
-   const pptosList = useMemo(() => {
-    if (pptoView === "ENVIADOS") return presupuestosEnviados;
-    if (pptoView === "APROBADOS") return presupuestosAprobados;
-    if (pptoView === "EJECUTADOS") return presupuestosEjecutados;
-    return [];
-  }, [
-    pptoView,
-    presupuestosEnviados,
-    presupuestosAprobados,
-    presupuestosEjecutados
-  ]); 
 
   return (
     <div className="app">
@@ -372,14 +301,12 @@ export default function DashboardSemaforo() {
         button { border: none; border-radius: 16px; padding: 12px 16px; background: #19d4f2; color: #001019; font-weight: 900; cursor: pointer; }
         button:disabled { opacity: .55; cursor: not-allowed; }
         .backButton { background: rgba(255,255,255,.08); color: white; border: 1px solid rgba(255,255,255,.12); }
-        .pill { border: 1px solid; border-radius: 999px; padding: 10px 18px; font-weight: 950; }
         .progress { border: 1px solid rgba(39,223,255,.24); background: rgba(39,223,255,.08); color: #b9f7ff; padding: 14px; border-radius: 18px; margin-bottom: 18px; text-align: center; }
         .progress.small { display: inline-flex; width: auto; max-width: max-content; padding: 8px 14px; border-radius: 999px; font-size: 13px; margin: 0; opacity: .9; }
         .error { border: 1px solid rgba(255,66,87,.35); background: rgba(255,66,87,.12); color: #ffb6bf; padding: 18px; border-radius: 22px; margin-bottom: 18px; }
         .localTabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 24px; }
-        .localButton { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: white; min-height: 72px; text-align: left; box-shadow: 0 14px 30px rgba(0,0,0,.18); }
+        .localButton { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: white; min-height: 72px; text-align: left; box-shadow: 0 14px 30px rgba(0,0,0,.18); }
         .localButton span { font-size: 15px; line-height: 1.2; }
-        .localButton b { font-size: 12px; }
         .localButton:hover { background: rgba(39,223,255,.08); transform: translateY(-1px); }
         .dashboardTitle { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 18px; }
         h1 { margin: 0; font-size: 56px; line-height: 1.05; color: #ffffff; font-weight: 950; letter-spacing: .02em; text-shadow: 0 4px 18px rgba(0,0,0,.4); }
@@ -405,7 +332,7 @@ export default function DashboardSemaforo() {
         .tablePanel { margin-top: 20px; }
         .assetDetail { text-align: left; }
         .detailTop { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .localBadge { border: 1px solid; border-radius: 999px; padding: 8px 14px; font-weight: 950; font-size: 13px; }
+        .localBadge { border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-weight: 950; font-size: 13px; background: rgba(255,255,255,.06); }
         .assetTitle { margin: 12px 0 0; font-size: 38px; line-height: 1.1; }
         .assetSubtitle { color: #9fb0c9; font-size: 18px; margin-top: 6px; }
         .detailGrid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 14px; margin: 24px 0; }
@@ -413,11 +340,11 @@ export default function DashboardSemaforo() {
         .detailItem span { display: block; color: #9fb0c9; text-transform: uppercase; letter-spacing: .16em; font-size: 10px; font-weight: 900; margin-bottom: 8px; }
         .detailItem b { color: white; font-size: 16px; }
         .detailBox { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 20px; padding: 18px; margin-top: 14px; }
-        .detailBox p { margin: 12px 0 0; color: #dce7f7; line-height: 1.5; }
+        .detailBox p { margin: 12px 0 0; color: #dce7f7; line-height: 1.5; white-space: pre-wrap; }
         .tableHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .tableBox { max-height: 520px; overflow: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); }
+        .tableBox { max-height: 520px; overflow: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); margin-top: 18px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; vertical-align: top; }
         th { color: #9fb0c9; background: rgba(0,0,0,.18); position: sticky; top: 0; }
         @media (max-width: 1000px) { .cards { grid-template-columns: repeat(2, 1fr); } .mainGrid { grid-template-columns: 1fr; } .header, .dashboardTitle { flex-direction: column; align-items: stretch; } h1 { font-size: 32px; } }
       `}</style>
@@ -435,18 +362,13 @@ export default function DashboardSemaforo() {
             {progress ? <div className="progress small">{progress}</div> : null}
             {isLocalPage ? <button className="backButton" onClick={goBack}>← Volver</button> : null}
             <button onClick={loadAllLocals} disabled={loading}>{loading ? "Actualizando..." : "Actualizar datos"}</button>
-            
           </div>
         </header>
 
         <section className="dashboardTitle">
           <div>
             <h1>{selectedLocal === "TODOS" ? "Resumen general" : selectedLocal}</h1>
-            <div className="subtitle">
-              {selectedLocal === "TODOS"
-                ? "Selecciona un local para revisar su estado específico."
-                : "Vista individual del local seleccionado."}
-            </div>
+            <div className="subtitle">{selectedLocal === "TODOS" ? "Selecciona un local para revisar su estado específico." : "Vista individual del local seleccionado."}</div>
           </div>
         </section>
 
@@ -454,9 +376,7 @@ export default function DashboardSemaforo() {
 
         {!isLocalPage ? (
           <section className="localTabs">
-            {localsData.map((local) => (
-              <LocalButton key={local.local} local={local} onClick={() => openLocal(local.local)} />
-            ))}
+            {localsData.map((local) => <LocalButton key={local.local} local={local} onClick={() => openLocal(local.local)} />)}
           </section>
         ) : null}
 
@@ -471,6 +391,8 @@ export default function DashboardSemaforo() {
                   setActiveView(cat.id === "TODOS" ? "RESUMEN" : "CATEGORIA");
                   setSearch("");
                   setSelectedAsset(null);
+                  setSelectedPpto(null);
+                  setPptoView("");
                 }}
               >
                 {cat.label}
@@ -481,9 +403,7 @@ export default function DashboardSemaforo() {
 
         {!(isLocalPage && activeView === "CATEGORIA") ? (
           <section className="cards">
-            {!isLocalPage ? (
-              <Card title="Locales" value={summary.locales ?? "-"} onClick={goBack} active={activeView === "RESUMEN" && !isLocalPage} />
-            ) : null}
+            {!isLocalPage ? <Card title="Locales" value={summary.locales ?? "-"} onClick={goBack} active={activeView === "RESUMEN" && !isLocalPage} /> : null}
             <Card title="Activos totales" value={summary.total ?? "-"} onClick={() => setActiveView("ACTIVOS")} active={activeView === "ACTIVOS"} />
             <Card title="Operativos" value={summary.operativos ?? "-"} tone={getTone("OPERATIVO")} onClick={() => setActiveView("OPERATIVOS")} active={activeView === "OPERATIVOS"} />
             <Card title="Observados" value={summary.observados ?? "-"} tone={getTone("OBSERVADO")} onClick={() => setActiveView("OBSERVADOS")} active={activeView === "OBSERVADOS"} />
@@ -493,125 +413,105 @@ export default function DashboardSemaforo() {
 
         {activeView === "RESUMEN" ? (
           <>
-          <section className="mainGrid">
-            <div className="panel">
-              <div className="panelTitle">Equipos sin detalle</div>
-              <div className="bigPercent" style={{ color: semTone.color }}>{summary.porcentajeSinDetalle ?? 0}%</div>
-              <div className="barBg"><div className="bar" style={{ width: `${Math.min(100, Math.max(0, summary.porcentajeSinDetalle || 0))}%`, background: semTone.color }} /></div>
-              <div className="hint">Porcentaje descontando observados y críticos.</div>
-            </div>
+            <section className="mainGrid">
+              <div className="panel">
+                <div className="panelTitle">Equipos sin detalle</div>
+                <div className="bigPercent" style={{ color: semTone.color }}>{summary.porcentajeSinDetalle ?? 0}%</div>
+                <div className="barBg"><div className="bar" style={{ width: `${Math.min(100, Math.max(0, summary.porcentajeSinDetalle || 0))}%`, background: semTone.color }} /></div>
+                <div className="hint">Porcentaje descontando observados y críticos.</div>
+              </div>
 
-            <div className="panel">
-              <div className="panelTitle">Salud general</div>
-              <div className="bigPercent" style={{ color: getTone(summary.criticos > 0 ? "ROJO" : "VERDE").color }}>{summary.saludGeneral ?? 0}%</div>
-              <HealthBar summary={summary} />
-              <div className="hint">Solo descuentan los equipos críticos. Los observados siguen funcionando.</div>
-            </div>
-          </section>
-        {isLocalPage ? (
-          <section className="panel tablePanel">
-            <div className="panelTitle" style={{ textAlign: "left" }}>
-              Gestión de presupuestos
-            </div>
+              <div className="panel">
+                <div className="panelTitle">Salud general</div>
+                <div className="bigPercent" style={{ color: getTone(summary.criticos > 0 ? "ROJO" : "VERDE").color }}>{summary.saludGeneral ?? 0}%</div>
+                <HealthBar summary={summary} />
+                <div className="hint">Solo descuentan los equipos críticos. Los observados siguen funcionando.</div>
+              </div>
+            </section>
 
-            {pptosLoading ? (
-              <div className="hint">Cargando presupuestos...</div>
+            {isLocalPage ? (
+              <section className="panel tablePanel">
+                <div className="panelTitle" style={{ textAlign: "left" }}>Gestión de presupuestos</div>
+                {pptosLoading ? <div className="hint">Cargando presupuestos...</div> : null}
+
+                <div className="cards" style={{ marginTop: 18 }}>
+                  <Card title="Presupuestos enviados" value={presupuestosEnviados.length} tone={getTone("AMARILLO")} onClick={() => { setPptoView("ENVIADOS"); setSelectedPpto(null); }} active={pptoView === "ENVIADOS"} />
+                  <Card title="Presupuestos aprobados" value={presupuestosAprobados.length} tone={getTone("OPERATIVO")} onClick={() => { setPptoView("APROBADOS"); setSelectedPpto(null); }} active={pptoView === "APROBADOS"} />
+                  <Card title="Presupuestos ejecutados" value={presupuestosEjecutados.length} tone={getTone("VERDE")} onClick={() => { setPptoView("EJECUTADOS"); setSelectedPpto(null); }} active={pptoView === "EJECUTADOS"} />
+                </div>
+
+                {pptoView ? (
+                  <div className="tableBox">
+                    {!selectedPpto ? (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>PPTO</th>
+                            {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
+                            {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
+                              <>
+                                <th>Fecha OC</th>
+                                <th>OC</th>
+                              </>
+                            ) : null}
+                            <th>Estado</th>
+                            <th>Detalle</th>
+                            {pptoView === "EJECUTADOS" ? <th>Rep. ejecución</th> : null}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pptosList.map((ppto, index) => (
+                            <tr key={`${ppto.ppto}-${index}`} onClick={() => setSelectedPpto(ppto)} style={{ cursor: "pointer" }}>
+                              <td>{ppto.ppto || "-"}</td>
+                              {pptoView === "ENVIADOS" ? <td>{ppto.fechaPpto || "-"}</td> : null}
+                              {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
+                                <>
+                                  <td>{ppto.fechaOc || "-"}</td>
+                                  <td>{ppto.oc || "-"}</td>
+                                </>
+                              ) : null}
+                              <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
+                              <td>{ppto.detalle || "-"}</td>
+                              {pptoView === "EJECUTADOS" ? <td>{ppto.reporteEjecucion || "-"}</td> : null}
+                            </tr>
+                          ))}
+                          {!pptosList.length ? (
+                            <tr><td colSpan={10}>No hay presupuestos en esta categoría.</td></tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="assetDetail">
+                        <div className="detailTop">
+                          <button className="backButton" onClick={() => setSelectedPpto(null)}>← Volver al listado</button>
+                          <div className="localBadge">{selectedPpto.estado || "Sin estado"}</div>
+                        </div>
+                        <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del presupuesto</div>
+                        <h2 className="assetTitle">{selectedPpto.ppto || "Sin PPTO"}</h2>
+                        <div className="assetSubtitle">OC: {selectedPpto.oc || "Sin OC"}</div>
+                        <div className="detailGrid">
+                          <div className="detailItem"><span>Local</span><b>{selectedPpto.codigo || ""} - {selectedPpto.local || "-"}</b></div>
+                          <div className="detailItem"><span>Estado</span><b>{selectedPpto.estado || "-"}</b></div>
+                          <div className="detailItem"><span>Fecha PPTO</span><b>{selectedPpto.fechaPpto || "-"}</b></div>
+                          <div className="detailItem"><span>Fecha OC</span><b>{selectedPpto.fechaOc || "-"}</b></div>
+                          <div className="detailItem"><span>Fecha ejecución</span><b>{selectedPpto.fechaEjecucion || "-"}</b></div>
+                          <div className="detailItem"><span>Reporte origen</span><b>{selectedPpto.reporteOrigen || "-"}</b></div>
+                          <div className="detailItem"><span>Reporte ejecución</span><b>{selectedPpto.reporteEjecucion || "-"}</b></div>
+                        </div>
+                        <div className="detailBox">
+                          <div className="panelTitle" style={{ textAlign: "left" }}>Detalle</div>
+                          <p>{selectedPpto.detalle || "Sin detalle registrado."}</p>
+                        </div>
+                        <div className="detailBox">
+                          <div className="panelTitle" style={{ textAlign: "left" }}>Materiales</div>
+                          <p>{selectedPpto.materiales || "Sin materiales registrados."}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </section>
             ) : null}
-
-            <div className="cards" style={{ marginTop: 18 }}>
-              <Card
-                title="Presupuestos enviados"
-                value={presupuestosEnviados.length}
-                tone={getTone("AMARILLO")}
-                onClick={() => {
-                  setPptoView("ENVIADOS");
-                  setSelectedPpto(null);
-                }}
-                active={pptoView === "ENVIADOS"}
-              />
-
-              <Card
-                title="Presupuestos aprobados"
-                value={presupuestosAprobados.length}
-                tone={getTone("OPERATIVO")}
-                onClick={() => {
-                  setPptoView("APROBADOS");
-                  setSelectedPpto(null);
-                }}
-                active={pptoView === "APROBADOS"}
-              />
-
-              <Card
-                title="Presupuestos ejecutados"
-                value={presupuestosEjecutados.length}
-                tone={getTone("VERDE")}
-                onClick={() => {
-                  setPptoView("EJECUTADOS");
-                  setSelectedPpto(null);
-                }}
-                active={pptoView === "EJECUTADOS"}
-              />
-            </div>
-          </section>
-        ) : null}
-        {pptoView ? (
-          <div className="tableBox" style={{ marginTop: 20 }}>
-            {!selectedPpto ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>PPTO</th>
-
-                    {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
-
-                    {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
-                      <>
-                        <th>Fecha OC</th>
-                        <th>OC</th>
-                      </>
-                    ) : null}
-
-                    <th>Estado</th>
-                    <th>Detalle</th>
-
-                    {pptoView === "EJECUTADOS" ? <th>Rep. ejecución</th> : null}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {pptosList.map((ppto, index) => (
-                    <tr
-                      key={`${ppto.ppto}-${index}`}
-                      onClick={() => setSelectedPpto(ppto)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td>{ppto.ppto || "-"}</td>
-
-                      {pptoView === "ENVIADOS" ? (
-                        <td>{ppto.fechaPpto || "-"}</td>
-                      ) : null}
-
-                      {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
-                        <>
-                          <td>{ppto.fechaOc || "-"}</td>
-                          <td>{ppto.oc || "-"}</td>
-                        </>
-                      ) : null}
-
-                      <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
-                      <td>{ppto.detalle || "-"}</td>
-
-                      {pptoView === "EJECUTADOS" ? (
-                        <td>{ppto.reporteEjecucion || "-"}</td>
-                      ) : null}
-                    </tr>
-                  ))}
-
-                  {!pptosList.length ? (
-                    <tr>
-                      <td colSpan={10}>No hay presupuestos en esta categoría.</td>
-                    </tr>
-                  ) : null}
           </>
         ) : (
           <section className="panel tablePanel">
@@ -636,11 +536,7 @@ export default function DashboardSemaforo() {
                     </thead>
                     <tbody>
                       {filteredAssets.map((asset, index) => (
-                        <tr
-                          key={`${asset.local}-${asset.section}-${asset.item}-${index}`}
-                          onClick={() => setSelectedAsset(asset)}
-                          style={{ cursor: "pointer" }}
-                        >
+                        <tr key={`${asset.local}-${asset.section}-${asset.item}-${index}`} onClick={() => setSelectedAsset(asset)} style={{ cursor: "pointer" }}>
                           <td>{asset.local}</td>
                           <td>{asset.tipo || "Sin tipo"}</td>
                           <td>{asset.modelo || "Sin modelo"}</td>
@@ -657,47 +553,23 @@ export default function DashboardSemaforo() {
               <div className="assetDetail">
                 <div className="detailTop">
                   <button className="backButton" onClick={() => setSelectedAsset(null)}>← Volver al listado</button>
-                  <div className="localBadge" style={{ color: getTone(selectedAsset.estado).color, background: getTone(selectedAsset.estado).bg, borderColor: getTone(selectedAsset.estado).border }}>
-                    {selectedAsset.estado}
-                  </div>
+                  <div className="localBadge" style={{ color: getTone(selectedAsset.estado).color, background: getTone(selectedAsset.estado).bg, borderColor: getTone(selectedAsset.estado).border }}>{selectedAsset.estado}</div>
                 </div>
-
                 <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del equipo</div>
                 <h2 className="assetTitle">{selectedAsset.tipo || "Equipo"}</h2>
                 <div className="assetSubtitle">{selectedAsset.modelo || "Sin modelo registrado"}</div>
-
                 <div className="detailGrid">
-                  <div className="detailItem">
-                    <span>Local</span>
-                    <b>{selectedAsset.local || "Sin local"}</b>
-                  </div>
-                  <div className="detailItem">
-                    <span>Tipo</span>
-                    <b>{selectedAsset.tipo || "Sin tipo"}</b>
-                  </div>
-                  <div className="detailItem">
-                    <span>Modelo</span>
-                    <b>{selectedAsset.modelo || "Sin modelo"}</b>
-                  </div>
-                  <div className="detailItem">
-                    <span>Estado</span>
-                    <b style={{ color: getTone(selectedAsset.estado).color }}>{selectedAsset.estado || "Sin estado"}</b>
-                  </div>
-                  <div className="detailItem">
-                    <span>Sección</span>
-                    <b>{selectedAsset.section || "Sin sección"}</b>
-                  </div>
-                  <div className="detailItem">
-                    <span>Ítem</span>
-                    <b>{selectedAsset.item || "-"}</b>
-                  </div>
+                  <div className="detailItem"><span>Local</span><b>{selectedAsset.local || "Sin local"}</b></div>
+                  <div className="detailItem"><span>Tipo</span><b>{selectedAsset.tipo || "Sin tipo"}</b></div>
+                  <div className="detailItem"><span>Modelo</span><b>{selectedAsset.modelo || "Sin modelo"}</b></div>
+                  <div className="detailItem"><span>Estado</span><b style={{ color: getTone(selectedAsset.estado).color }}>{selectedAsset.estado || "Sin estado"}</b></div>
+                  <div className="detailItem"><span>Sección</span><b>{selectedAsset.section || "Sin sección"}</b></div>
+                  <div className="detailItem"><span>Ítem</span><b>{selectedAsset.item || "-"}</b></div>
                 </div>
-
                 <div className="detailBox">
                   <div className="panelTitle" style={{ textAlign: "left" }}>Detalle / observación</div>
                   <p>{selectedAsset.observacion || "Sin observaciones registradas."}</p>
                 </div>
-
                 <div className="detailBox">
                   <div className="panelTitle" style={{ textAlign: "left" }}>Pendiente</div>
                   <p>{selectedAsset.pendiente || "Sin pendientes registrados."}</p>
