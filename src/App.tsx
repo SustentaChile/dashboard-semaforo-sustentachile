@@ -76,6 +76,12 @@ function buildGlobalSummary(localsData) {
   return { ...base, locales: list.length, verdes, amarillos, rojos };
 }
 
+function getYearFromDate(value) {
+  const parts = String(value || "").trim().split("/");
+  if (parts.length !== 3) return "";
+  return parts[2] || "";
+}
+
 function getAssetCategory(asset) {
   const text = [asset.section, asset.claseActivo, asset.tipo, asset.modelo, asset.observacion, asset.pendiente]
     .join(" ")
@@ -133,6 +139,7 @@ export default function DashboardSemaforo() {
   const [pptosLoading, setPptosLoading] = useState(false);
   const [pptoView, setPptoView] = useState("");
   const [selectedPpto, setSelectedPpto] = useState(null);
+  const [pptoYearFilter, setPptoYearFilter] = useState(String(new Date().getFullYear()));
 
   async function fetchJson(url) {
     const response = await fetch(url, { method: "GET", redirect: "follow" });
@@ -247,12 +254,29 @@ export default function DashboardSemaforo() {
   const categoryLabel = CATEGORIES.find((cat) => cat.id === assetCategory)?.label || "Activos";
   const detailTitle = activeView === "CATEGORIA" ? `Listado de ${categoryLabel.toLowerCase()}` : activeView === "ACTIVOS" ? "Listado de activos totales" : activeView === "OPERATIVOS" ? "Listado de equipos operativos" : activeView === "OBSERVADOS" ? "Listado de equipos observados" : activeView === "CRITICOS" ? "Listado de fallas críticas" : "";
 
-  const presupuestosEnviados = useMemo(() => pptosData.filter((p) => String(p.estado || "").toUpperCase().trim() === "ENVIADO"), [pptosData]);
-  const presupuestosAprobados = useMemo(() => pptosData.filter((p) => {
+  const pptoYears = useMemo(() => {
+    const years = new Set();
+    pptosData.forEach((p) => {
+      const year = getYearFromDate(p.fechaPpto) || getYearFromDate(p.fechaOc) || getYearFromDate(p.fechaEjecucion);
+      if (year) years.add(year);
+    });
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [pptosData]);
+
+  const pptosFiltradosPorFecha = useMemo(() => {
+    if (!pptoYearFilter || pptoYearFilter === "TODOS") return pptosData;
+    return pptosData.filter((p) => {
+      const year = getYearFromDate(p.fechaPpto) || getYearFromDate(p.fechaOc) || getYearFromDate(p.fechaEjecucion);
+      return year === pptoYearFilter;
+    });
+  }, [pptosData, pptoYearFilter]);
+
+  const presupuestosEnviados = useMemo(() => pptosFiltradosPorFecha.filter((p) => String(p.estado || "").toUpperCase().trim() === "ENVIADO"), [pptosFiltradosPorFecha]);
+  const presupuestosAprobados = useMemo(() => pptosFiltradosPorFecha.filter((p) => {
     const estado = String(p.estado || "").toUpperCase().trim();
     return estado === "PENDIENTE" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
-  }), [pptosData]);
-  const presupuestosEjecutados = useMemo(() => pptosData.filter((p) => String(p.estado || "").toUpperCase().trim() === "EJECUTADO"), [pptosData]);
+  }), [pptosFiltradosPorFecha]);
+  const presupuestosEjecutados = useMemo(() => pptosFiltradosPorFecha.filter((p) => String(p.estado || "").toUpperCase().trim() === "EJECUTADO"), [pptosFiltradosPorFecha]);
 
   const pptosList = useMemo(() => {
     if (pptoView === "ENVIADOS") return presupuestosEnviados;
@@ -333,7 +357,7 @@ export default function DashboardSemaforo() {
         .assetDetail { text-align: left; }
         .detailTop { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
         .localBadge { border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-weight: 950; font-size: 13px; background: rgba(255,255,255,.06); }
-        .assetTitle { margin: 12px 0 0; font-size: 38px; line-height: 1.1; }
+        .assetTitle { margin: 12px 0 0; font-size: 38px; line-height: 1.1; color: #ffffff; }
         .assetSubtitle { color: #9fb0c9; font-size: 18px; margin-top: 6px; }
         .detailGrid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 14px; margin: 24px 0; }
         .detailItem { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 18px; padding: 16px; }
@@ -342,10 +366,13 @@ export default function DashboardSemaforo() {
         .detailBox { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 20px; padding: 18px; margin-top: 14px; }
         .detailBox p { margin: 12px 0 0; color: #dce7f7; line-height: 1.5; white-space: pre-wrap; }
         .tableHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .tableBox { max-height: 520px; overflow: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); margin-top: 18px; }
+        .tableBox { max-height: 520px; overflow: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); margin-top: 18px; background: rgba(5,7,13,.72); }
+        .filterRow { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+        .filterControl { display: flex; align-items: center; gap: 10px; color: #9fb0c9; font-size: 13px; }
+        .filterControl select { background: #111827; border: 1px solid rgba(255,255,255,.12); color: white; border-radius: 12px; padding: 10px 12px; outline: none; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; vertical-align: top; }
-        th { color: #9fb0c9; background: rgba(0,0,0,.18); position: sticky; top: 0; }
+        th { color: #dbeafe; background: #101827; position: sticky; top: 0; z-index: 2; font-weight: 900; }
         @media (max-width: 1000px) { .cards { grid-template-columns: repeat(2, 1fr); } .mainGrid { grid-template-columns: 1fr; } .header, .dashboardTitle { flex-direction: column; align-items: stretch; } h1 { font-size: 32px; } }
       `}</style>
 
@@ -431,7 +458,19 @@ export default function DashboardSemaforo() {
 
             {isLocalPage ? (
               <section className="panel tablePanel">
-                <div className="panelTitle" style={{ textAlign: "left" }}>Gestión de presupuestos</div>
+                <div className="filterRow">
+                  <div>
+                    <div className="panelTitle" style={{ textAlign: "left" }}>Gestión de presupuestos</div>
+                    <div className="hint" style={{ textAlign: "left" }}>Filtrado por fecha de PPTO, OC o ejecución.</div>
+                  </div>
+                  <label className="filterControl">
+                    Año
+                    <select value={pptoYearFilter} onChange={(event) => { setPptoYearFilter(event.target.value); setSelectedPpto(null); setPptoView(""); }}>
+                      <option value="TODOS">Todos</option>
+                      {pptoYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                    </select>
+                  </label>
+                </div>
                 {pptosLoading ? <div className="hint">Cargando presupuestos...</div> : null}
 
                 <div className="cards" style={{ marginTop: 18 }}>
