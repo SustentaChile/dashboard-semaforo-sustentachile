@@ -344,6 +344,18 @@ export default function DashboardSemaforo() {
     setSelectedAsset(null);
   }
 
+   const pptosList = useMemo(() => {
+    if (pptoView === "ENVIADOS") return presupuestosEnviados;
+    if (pptoView === "APROBADOS") return presupuestosAprobados;
+    if (pptoView === "EJECUTADOS") return presupuestosEjecutados;
+    return [];
+  }, [
+    pptoView,
+    presupuestosEnviados,
+    presupuestosAprobados,
+    presupuestosEjecutados
+  ]); 
+
   return (
     <div className="app">
       <style>{`
@@ -541,6 +553,110 @@ export default function DashboardSemaforo() {
               />
             </div>
           </section>
+        ) : null}
+        {pptoView ? (
+          <div className="tableBox" style={{ marginTop: 20 }}>
+            {!selectedPpto ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>PPTO</th>
+                    <th>OC</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                    <th>Materiales</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pptosList.map((ppto, index) => (
+                    <tr
+                      key={`${ppto.ppto}-${index}`}
+                      onClick={() => setSelectedPpto(ppto)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td>{ppto.ppto || "-"}</td>
+                      <td>{ppto.oc || "-"}</td>
+                      <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
+                      <td>{ppto.detalle || "-"}</td>
+                      <td>{ppto.materiales || "-"}</td>
+                    </tr>
+                  ))}
+
+                  {!pptosList.length ? (
+                    <tr>
+                      <td colSpan={5}>No hay presupuestos en esta categoría.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            ) : (
+              <div className="assetDetail">
+                <div className="detailTop">
+                  <button className="backButton" onClick={() => setSelectedPpto(null)}>
+                    ← Volver al listado
+                  </button>
+                  <div className="localBadge">
+                    {selectedPpto.estado || "Sin estado"}
+                  </div>
+                </div>
+
+                <div className="panelTitle" style={{ textAlign: "left" }}>
+                  Detalle del presupuesto
+                </div>
+
+                <h2 className="assetTitle">{selectedPpto.ppto || "Sin PPTO"}</h2>
+                <div className="assetSubtitle">
+                  OC: {selectedPpto.oc || "Sin OC"}
+                </div>
+
+                <div className="detailGrid">
+                  <div className="detailItem">
+                    <span>Local</span>
+                    <b>{selectedPpto.codigo || ""} - {selectedPpto.local || "-"}</b>
+                  </div>
+
+                  <div className="detailItem">
+                    <span>Fecha PPTO</span>
+                    <b>{selectedPpto.fechaPpto || "-"}</b>
+                  </div>
+
+                  <div className="detailItem">
+                    <span>Fecha OC</span>
+                    <b>{selectedPpto.fechaOc || "-"}</b>
+                  </div>
+
+                  <div className="detailItem">
+                    <span>Fecha ejecución</span>
+                    <b>{selectedPpto.fechaEjecucion || "-"}</b>
+                  </div>
+
+                  <div className="detailItem">
+                    <span>Reporte origen</span>
+                    <b>{selectedPpto.reporteOrigen || "-"}</b>
+                  </div>
+
+                  <div className="detailItem">
+                    <span>Reporte ejecución</span>
+                    <b>{selectedPpto.reporteEjecucion || "-"}</b>
+                  </div>
+                </div>
+
+                <div className="detailBox">
+                  <div className="panelTitle" style={{ textAlign: "left" }}>
+                    Descripción / detalle
+                  </div>
+                  <p>{selectedPpto.detalle || "Sin detalle registrado."}</p>
+                </div>
+
+                <div className="detailBox">
+                  <div className="panelTitle" style={{ textAlign: "left" }}>
+                    Materiales
+                  </div>
+                  <p>{selectedPpto.materiales || "Sin materiales registrados."}</p>
+                </div>
+              </div>
+            )}
+          </div>
         ) : null}
           </>
         ) : (
