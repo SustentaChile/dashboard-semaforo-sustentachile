@@ -560,12 +560,29 @@ export default function DashboardSemaforo() {
               <table>
                 <thead>
                   <tr>
+
                     <th>PPTO</th>
-                    <th>OC</th>
+
+                    {pptoView === "ENVIADOS" && (
+                        <th>Fecha PPTO</th>
+                    )}
+
+                    {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") && (
+                      <>
+                        <th>Fecha OC</th>
+                        <th>OC</th>
+                      </>
+                    )}
+
                     <th>Estado</th>
                     <th>Detalle</th>
-                    <th>Materiales</th>
+
+                    {pptoView === "EJECUTADOS" && (
+                      <th>Rep. ejecución</th>
+                    )}
+
                   </tr>
+                </thead>
                 </thead>
                 <tbody>
                   {pptosList.map((ppto, index) => (
@@ -575,16 +592,33 @@ export default function DashboardSemaforo() {
                       style={{ cursor: "pointer" }}
                     >
                       <td>{ppto.ppto || "-"}</td>
-                      <td>{ppto.oc || "-"}</td>
-                      <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
+
+                      {pptoView === "ENVIADOS" && (
+                        <td>{ppto.fechaPpto || "-"}</td>
+                      )}
+
+                      {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") && (
+                        <>
+                          <td>{ppto.fechaOc || "-"}</td>
+                          <td>{ppto.oc || "-"}</td>
+                        </>
+                      )}
+
+                      <td style={{ fontWeight: 900 }}>
+                        {ppto.estado || "-"}
+                      </td>
+
                       <td>{ppto.detalle || "-"}</td>
-                      <td>{ppto.materiales || "-"}</td>
+
+                      {pptoView === "EJECUTADOS" && (
+                        <td>{ppto.reporteEjecucion || "-"}</td>
+                      )}
                     </tr>
                   ))}
 
                   {!pptosList.length ? (
                     <tr>
-                      <td colSpan={5}>No hay presupuestos en esta categoría.</td>
+                      <td colSpan={10}>No hay presupuestos en esta categoría.</td>
                     </tr>
                   ) : null}
                 </tbody>
