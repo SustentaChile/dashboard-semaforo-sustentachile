@@ -146,6 +146,8 @@ function HealthBar({ summary }) {
 export default function DashboardSemaforo() {
   const [localsData, setLocalsData] = useState<any[]>([]);
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
+  const [pptosData, setPptosData] = useState([]);
+  const [pptosLoading, setPptosLoading] = useState(false);
   const [activeView, setActiveView] = useState("RESUMEN");
   const [assetCategory, setAssetCategory] = useState("TODOS");
   const [loading, setLoading] = useState(false);
@@ -207,11 +209,47 @@ export default function DashboardSemaforo() {
       setLoading(false);
     }
   }
+  async function loadPptos(localName) {
+
+    try {
+
+      setPptosLoading(true);
+
+      const response = await fetch(
+        `${PPTOS_API}&local=${encodeURIComponent(localName)}`
+      );
+
+      const data = await response.json();
+
+      if (data.ok) {
+        setPptosData(data.pptos || []);
+      }
+
+    } catch (error) {
+
+      console.error("Error cargando PPTOS", error);
+
+    } finally {
+
+      setPptosLoading(false);
+
+    }
+  }
 
   useEffect(() => {
     loadAllLocals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+
+    if (selectedLocal === "TODOS") {
+      setPptosData([]);
+      return;
+    }
+
+    loadPptos(selectedLocal);
+
+  }, [selectedLocal]); 
 
   const isLocalPage = selectedLocal !== "TODOS";
 
