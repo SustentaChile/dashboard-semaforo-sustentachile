@@ -148,6 +148,8 @@ export default function DashboardSemaforo() {
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
   const [pptosData, setPptosData] = useState([]);
   const [pptosLoading, setPptosLoading] = useState(false);
+  const [pptoView, setPptoView] = useState("");
+  const [selectedPpto, setSelectedPpto] = useState(null);
   const [activeView, setActiveView] = useState("RESUMEN");
   const [assetCategory, setAssetCategory] = useState("TODOS");
   const [loading, setLoading] = useState(false);
@@ -473,6 +475,52 @@ export default function DashboardSemaforo() {
               <div className="hint">Solo descuentan los equipos críticos. Los observados siguen funcionando.</div>
             </div>
           </section>
+        {isLocalPage ? (
+          <section className="panel tablePanel">
+            <div className="panelTitle" style={{ textAlign: "left" }}>
+              Gestión de presupuestos
+            </div>
+
+            {pptosLoading ? (
+              <div className="hint">Cargando presupuestos...</div>
+            ) : null}
+
+            <div className="cards" style={{ marginTop: 18 }}>
+              <Card
+                title="Presupuestos enviados"
+                value={presupuestosEnviados.length}
+                tone={getTone("AMARILLO")}
+                onClick={() => {
+                  setPptoView("ENVIADOS");
+                  setSelectedPpto(null);
+                }}
+                active={pptoView === "ENVIADOS"}
+              />
+
+              <Card
+                title="Presupuestos aprobados"
+                value={presupuestosAprobados.length}
+                tone={getTone("OPERATIVO")}
+                onClick={() => {
+                  setPptoView("APROBADOS");
+                  setSelectedPpto(null);
+                }}
+                active={pptoView === "APROBADOS"}
+              />
+
+              <Card
+                title="Presupuestos ejecutados"
+                value={presupuestosEjecutados.length}
+                tone={getTone("VERDE")}
+                onClick={() => {
+                  setPptoView("EJECUTADOS");
+                  setSelectedPpto(null);
+                }}
+                active={pptoView === "EJECUTADOS"}
+              />
+            </div>
+          </section>
+        ) : null}
         ) : (
           <section className="panel tablePanel">
             {!selectedAsset ? (
