@@ -307,14 +307,14 @@ export default function DashboardSemaforo() {
   const presupuestosEnviados = useMemo(() => {
     return pptosData.filter((p) => {
       const estado = String(p.estado || "").toUpperCase().trim();
-      return estado === "ENVIADO" || estado === "PENDIENTE";
+      return estado === "ENVIADO";
     });
   }, [pptosData]);
 
   const presupuestosAprobados = useMemo(() => {
     return pptosData.filter((p) => {
       const estado = String(p.estado || "").toUpperCase().trim();
-      return estado === "APROBADO" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
+      return estado === "PENDIENTE" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
     });
   }, [pptosData]);
 
