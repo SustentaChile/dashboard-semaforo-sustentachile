@@ -460,6 +460,7 @@ export default function DashboardSemaforo() {
         ) : null}
 
         {activeView === "RESUMEN" ? (
+          <>
           <section className="mainGrid">
             <div className="panel">
               <div className="panelTitle">Equipos sin detalle</div>
@@ -521,6 +522,7 @@ export default function DashboardSemaforo() {
             </div>
           </section>
         ) : null}
+          </>
         ) : (
           <section className="panel tablePanel">
             {!selectedAsset ? (
