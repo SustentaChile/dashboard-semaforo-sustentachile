@@ -304,7 +304,27 @@ export default function DashboardSemaforo() {
         : activeView === "CRITICOS"
           ? "Listado de fallas críticas"
           : "";
+  const presupuestosEnviados = useMemo(() => {
+    return pptosData.filter((p) => {
+      const estado = String(p.estado || "").toUpperCase().trim();
+      return estado === "ENVIADO" || estado === "PENDIENTE";
+    });
+  }, [pptosData]);
 
+  const presupuestosAprobados = useMemo(() => {
+    return pptosData.filter((p) => {
+      const estado = String(p.estado || "").toUpperCase().trim();
+      return estado === "APROBADO" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
+    });
+  }, [pptosData]);
+
+  const presupuestosEjecutados = useMemo(() => {
+    return pptosData.filter((p) => {
+      const estado = String(p.estado || "").toUpperCase().trim();
+      return estado === "EJECUTADO";
+    });
+  }, [pptosData]);
+  
   const semaforoGeneral = summary.criticos > 0 ? "ROJO" : summary.observados > 0 ? "AMARILLO" : "VERDE";
   const semTone = getTone(semaforoGeneral);
 
