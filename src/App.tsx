@@ -474,10 +474,38 @@ export default function DashboardSemaforo() {
 
         <section className="dashboardTitle">
           <div>
-            <h1>{selectedLocal !== "TODOS" ? selectedLocal : selectedGroup !== "TODOS" ? `Resumen ${BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label}` : "Resumen general"}</h1>
-            <div className="subtitle">{selectedLocal !== "TODOS" ? "Vista individual del local seleccionado." : selectedGroup !== "TODOS" ? "Resumen filtrado por formato de local." : "Resumen general de activos y presupuestos."}</div>
+            <h1>
+              {selectedLocal !== "TODOS"
+                ? selectedLocal
+                : selectedGroup !== "TODOS"
+                  ? `Resumen ${BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label || selectedGroup}`
+                  : "Resumen general"}
+            </h1>
+            <div className="subtitle">
+              {selectedLocal !== "TODOS"
+                ? "Vista individual del local seleccionado."
+                : selectedGroup !== "TODOS"
+                  ? "Vista filtrada por grupo. Usa el menú para seleccionar un local específico."
+                  : "Resumen general de activos y presupuestos."}
+            </div>
           </div>
         </section>
+
+        {selectedGroup !== "TODOS" && selectedLocal === "TODOS" ? (
+          <section className="panel tablePanel" style={{ borderColor: "rgba(39,223,255,.45)", background: "rgba(39,223,255,.08)" }}>
+            <div className="filterRow">
+              <div>
+                <div className="panelTitle" style={{ textAlign: "left" }}>
+                  Estás dentro de: {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label || selectedGroup}
+                </div>
+                <div className="hint" style={{ textAlign: "left" }}>
+                  El resumen, la salud general y los presupuestos se muestran solo para este grupo.
+                </div>
+              </div>
+              <button className="backButton" onClick={goBack}>← Volver al resumen general</button>
+            </div>
+          </section>
+        ) : null}
 
         {error ? <div className="error">⚠ {error}</div> : null}
 
@@ -490,7 +518,16 @@ export default function DashboardSemaforo() {
                     key={group.id}
                     type="button"
                     className="localButton groupCard"
-                    onClick={() => openGroup(group.id)}
+                    onClick={() => {
+                      setSelectedGroup(group.id);
+                      setSelectedLocal("TODOS");
+                      setActiveView("RESUMEN");
+                      setAssetCategory("TODOS");
+                      setSearch("");
+                      setSelectedAsset(null);
+                      setSelectedPpto(null);
+                      setPptoView("");
+                    }}
                   >
                     <span>{group.label}</span>
                     <small>Entrar al resumen de {group.label}</small>
