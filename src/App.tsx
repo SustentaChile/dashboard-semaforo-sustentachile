@@ -405,8 +405,19 @@ export default function DashboardSemaforo() {
         .page { width: 100%; max-width: none; margin: 0; padding: 28px; }
         .header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 22px; }
         .brand { display: flex; align-items: center; gap: 14px; }
-        .logo { width: 54px; height: 54px; border-radius: 19px; background: rgba(0,217,255,.12); color: #27dfff; display: grid; place-items: center; font-size: 28px; }
-        .brandTitle { font-size: 32px; font-weight: 950; line-height: 1; letter-spacing: .02em; }
+        .mainLogo{
+          height:72px;
+          width:auto;
+          object-fit:contain;
+          display:block;
+        }
+
+        .brand{
+          display:flex;
+          flex-direction:column;
+          align-items:flex-start;
+          gap:10px;
+        }
         .brandSub { color: #9fb0c9; margin-top: 6px; font-size: 15px; }
         .actions { display: flex; align-items: center; gap: 12px; }
         button { border: none; border-radius: 16px; padding: 12px 16px; background: #19d4f2; color: #001019; font-weight: 900; cursor: pointer; }
@@ -472,11 +483,18 @@ export default function DashboardSemaforo() {
       <div className="page">
         <header className="header">
           <div className="brand">
-            <div className="logo">⌁</div>
-            <div>
-              <div className="brandTitle">SUSTENTA</div>
-              <div className="brandSub">Dashboard Semáforo</div>
+
+            <img
+              src="/logo-sustenta-white.png"
+              alt="Sustenta"
+              className="mainLogo"
+            />
+
+            <div className="brandSub">
+              Dashboard Semáforo
             </div>
+
+          </div>
           </div>
           <div className="actions">
             {progress ? <div className="progress small">{progress}</div> : null}
