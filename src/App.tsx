@@ -645,6 +645,7 @@ export default function DashboardSemaforo() {
                     <table>
                       <thead>
                         <tr>
+                          {!isLocalPage ? <th>Local</th> : null}
                           <th>PPTO</th>
                           {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
                           {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
@@ -661,6 +662,9 @@ export default function DashboardSemaforo() {
                       <tbody>
                         {pptosList.map((ppto, index) => (
                           <tr key={`${ppto.ppto}-${index}`} onClick={() => setSelectedPpto(ppto)} style={{ cursor: "pointer" }}>
+                            {!isLocalPage ? (
+                              <td>{ppto.codigo || ""} - {ppto.local || ppto.localDashboard || "-"}</td>
+                            ) : null}
                             <td>{ppto.ppto || "-"}</td>
                             {pptoView === "ENVIADOS" ? <td>{ppto.fechaPpto || "-"}</td> : null}
                             {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
