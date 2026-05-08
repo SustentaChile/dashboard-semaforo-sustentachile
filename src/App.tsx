@@ -495,7 +495,6 @@ export default function DashboardSemaforo() {
             </div>
 
           </div>
-          </div>
           <div className="actions">
             {progress ? <div className="progress small">{progress}</div> : null}
             {(isLocalPage || isGroupPage) ? (
