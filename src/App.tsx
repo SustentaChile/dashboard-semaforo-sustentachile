@@ -160,6 +160,10 @@ export default function DashboardSemaforo() {
   const [pptoView, setPptoView] = useState("");
   const [selectedPpto, setSelectedPpto] = useState(null);
   const [pptoYearFilter, setPptoYearFilter] = useState(String(new Date().getFullYear()));
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   async function fetchJson(url) {
     const response = await fetch(url, { method: "GET", redirect: "follow" });
@@ -395,6 +399,158 @@ export default function DashboardSemaforo() {
   }
 
 }
+  function handleLogin() {
+
+    if (
+      username === "admin" &&
+      password === "1234"
+    ) {
+      setIsAuthenticated(true);
+      setLoginError("");
+      return;
+    }
+
+    setLoginError("Usuario o contraseña incorrecta");
+  }
+  if (!isAuthenticated) {
+
+    return (
+
+      <div className="loginScreen">
+
+        <style>{`
+
+          body{
+            margin:0;
+            background:#05070d;
+            font-family:Arial, Helvetica, sans-serif;
+          }
+
+          .loginScreen{
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#05070d;
+            padding:24px;
+          }
+
+          .loginCard{
+            width:100%;
+            max-width:420px;
+            background:#0b1020;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:28px;
+            padding:42px;
+            box-shadow:0 20px 60px rgba(0,0,0,.45);
+          }
+
+          .loginLogo{
+            width:100%;
+            max-width:260px;
+            object-fit:contain;
+            display:block;
+            margin:0 auto 24px auto;
+          }
+
+          .loginTitle{
+            color:white;
+            font-size:32px;
+            font-weight:900;
+            text-align:center;
+            margin-bottom:10px;
+          }
+
+          .loginSub{
+            color:#9fb0c9;
+            text-align:center;
+            margin-bottom:28px;
+          }
+
+          .loginInput{
+            width:100%;
+            background:#111827;
+            border:1px solid rgba(255,255,255,.1);
+            border-radius:16px;
+            padding:14px;
+            color:white;
+            margin-bottom:14px;
+            font-size:15px;
+            box-sizing:border-box;
+          }
+
+          .loginButton{
+            width:100%;
+            background:#27dfff;
+            color:#001019;
+            border:none;
+            border-radius:16px;
+            padding:14px;
+            font-size:16px;
+            font-weight:800;
+            cursor:pointer;
+            margin-top:10px;
+          }
+
+          .loginError{
+            color:#ff5a7a;
+            text-align:center;
+            margin-top:14px;
+          }
+
+        `}</style>
+
+        <div className="loginCard">
+
+          <img
+            src="/logo-sustenta-white.png"
+            alt="Sustenta"
+            className="loginLogo"
+          />
+
+          <div className="loginTitle">
+            Acceso Dashboard
+          </div>
+
+          <div className="loginSub">
+            Ingresa tus credenciales
+          </div>
+
+          <input
+            className="loginInput"
+            placeholder="Usuario"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+
+          <input
+            className="loginInput"
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            className="loginButton"
+            onClick={handleLogin}
+          >
+            Ingresar
+          </button>
+
+          {loginError ? (
+            <div className="loginError">
+              {loginError}
+            </div>
+          ) : null}
+
+        </div>
+
+      </div>
+
+    );
+
+  }
 
   return (
     <div className="app">
