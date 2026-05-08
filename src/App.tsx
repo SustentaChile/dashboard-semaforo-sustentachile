@@ -406,7 +406,7 @@ export default function DashboardSemaforo() {
         .header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 22px; }
         .brand { display: flex; align-items: center; gap: 14px; }
         .mainLogo{
-          height:105px;
+          height:130px;
           width:auto;
           object-fit:contain;
           display:block;
@@ -489,11 +489,6 @@ export default function DashboardSemaforo() {
               alt="Sustenta"
               className="mainLogo"
             />
-
-            <div className="brandSub">
-              Dashboard Semáforo
-            </div>
-
           </div>
           <div className="actions">
             {progress ? <div className="progress small">{progress}</div> : null}
