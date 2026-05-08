@@ -356,7 +356,6 @@ export default function DashboardSemaforo() {
   function openGroup(groupId) {
     setSelectedGroup(groupId);
     setSelectedLocal("TODOS");
-    setSelectedGroup("TODOS");
     setActiveView("RESUMEN");
     setAssetCategory("TODOS");
     setSearch("");
@@ -377,6 +376,7 @@ export default function DashboardSemaforo() {
 
   function goBack() {
     setSelectedLocal("TODOS");
+    setSelectedGroup("TODOS");
     setActiveView("RESUMEN");
     setAssetCategory("TODOS");
     setSearch("");
@@ -517,22 +517,25 @@ export default function DashboardSemaforo() {
                     <small>Entrar al resumen de {group.label}</small>
                   </button>
                 ))}
-              </section>
-            ) : (
+              </section>) : null}
+
+            {selectedGroup !== "TODOS" ? (
               <section className="panel tablePanel">
                 <div className="filterRow">
                   <div>
-                    <div className="panelTitle" style={{ textAlign: "left" }}>
-                      Estás viendo: {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label}
-                    </div>
-                    <div className="hint" style={{ textAlign: "left" }}>
-                      El resumen superior y los presupuestos están filtrados solo por este grupo.
-                    </div>
+                    <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
+                    <div className="hint" style={{ textAlign: "left" }}>Elige un local de {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label} para abrir su vista individual.</div>
                   </div>
-                  <button className="backButton" onClick={goBack}>← Volver al resumen general</button>
+                  <label className="filterControl">
+                    Local
+                    <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
+                      <option value="">Seleccionar local</option>
+                      {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
+                    </select>
+                  </label>
                 </div>
               </section>
-            )}
+            ) : null}
           </>
         ) : null}
 
