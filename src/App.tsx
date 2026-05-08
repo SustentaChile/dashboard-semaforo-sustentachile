@@ -450,6 +450,8 @@ export default function DashboardSemaforo() {
         .filterRow { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
         .filterControl { display: flex; align-items: center; gap: 10px; color: #9fb0c9; font-size: 13px; }
         .filterControl select { background: #111827; border: 1px solid rgba(255,255,255,.12); color: white; border-radius: 12px; padding: 10px 12px; outline: none; }
+        .localSelectTop { display: flex; align-items: center; gap: 10px; min-width: 320px; color: #9fb0c9; font-size: 13px; justify-content: flex-end; }
+        .localSelectTop select { width: 230px; background: #111827; border: 1px solid rgba(255,255,255,.12); color: white; border-radius: 14px; padding: 12px; outline: none; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; vertical-align: top; }
         th { color: #dbeafe; background: #101827; position: sticky; top: 0; z-index: 2; font-weight: 900; }
@@ -485,10 +487,20 @@ export default function DashboardSemaforo() {
               {selectedLocal !== "TODOS"
                 ? "Vista individual del local seleccionado."
                 : selectedGroup !== "TODOS"
-                  ? "Vista filtrada por grupo. Usa el menú para seleccionar un local específico."
+                  ? "Vista filtrada por grupo. Selecciona un local desde el menú."
                   : "Resumen general de activos y presupuestos."}
             </div>
           </div>
+
+          {selectedGroup !== "TODOS" && selectedLocal === "TODOS" ? (
+            <label className="localSelectTop">
+              Local
+              <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
+                <option value="">Seleccionar local</option>
+                {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
+              </select>
+            </label>
+          ) : null}
         </section>
 
         {error ? <div className="error">⚠ {error}</div> : null}
@@ -518,24 +530,6 @@ export default function DashboardSemaforo() {
                   </button>
                 ))}
               </section>) : null}
-
-            {selectedGroup !== "TODOS" ? (
-              <section className="panel tablePanel">
-                <div className="filterRow">
-                  <div>
-                    <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
-                    <div className="hint" style={{ textAlign: "left" }}>Elige un local de {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label} para abrir su vista individual.</div>
-                  </div>
-                  <label className="filterControl">
-                    Local
-                    <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
-                      <option value="">Seleccionar local</option>
-                      {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
-                    </select>
-                  </label>
-                </div>
-              </section>
-            ) : null}
           </>
         ) : null}
 
