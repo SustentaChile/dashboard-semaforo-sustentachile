@@ -4,6 +4,12 @@ import React, { useMemo, useState, useEffect } from "react";
 const API_URL = "https://script.google.com/macros/s/AKfycbyvj4Ao28AJQnQX8-lnBI-oY8D0P9W5026YqjwQfFWbCJ2J-tFdc-hc8_DryFsKeFud/exec";
 const PPTOS_API = `${API_URL}?action=pptos`;
 
+const BUSINESS_GROUPS = [
+  { id: "JUMBO", label: "Jumbo" },
+  { id: "DS", label: "Dark Store" },
+  { id: "SPID", label: "SPID" },
+];
+
 const CATEGORIES = [
   { id: "TODOS", label: "Todos" },
   { id: "COMPRESORES", label: "Compresores" },
@@ -82,6 +88,18 @@ function getYearFromDate(value) {
   return parts[2] || "";
 }
 
+function getBusinessGroup(item) {
+  const code = String(item?.codigo || item?.cod || "").trim().toUpperCase();
+  const text = [item?.local, item?.localDashboard, item?.localOriginal, item?.name]
+    .join(" ")
+    .toUpperCase();
+
+  if (["J411", "J414"].includes(code) || text.includes("DARK STORE") || text.includes("DS ")) return "DS";
+  if (["J501", "J511", "J514", "J762", "J988", "J992"].includes(code) || text.includes("JUMBO")) return "JUMBO";
+  if (text.includes("SPID")) return "SPID";
+  return "OTROS";
+}
+
 function getAssetCategory(asset) {
   const text = [asset.section, asset.claseActivo, asset.tipo, asset.modelo, asset.observacion, asset.pendiente]
     .join(" ")
@@ -128,6 +146,7 @@ function HealthBar({ summary }) {
 export default function DashboardSemaforo() {
   const [localsData, setLocalsData] = useState([]);
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
+  const [selectedGroup, setSelectedGroup] = useState("TODOS");
   const [activeView, setActiveView] = useState("RESUMEN");
   const [assetCategory, setAssetCategory] = useState("TODOS");
   const [loading, setLoading] = useState(false);
@@ -136,6 +155,7 @@ export default function DashboardSemaforo() {
   const [search, setSearch] = useState("");
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [pptosData, setPptosData] = useState([]);
+  const [allPptosData, setAllPptosData] = useState([]);
   const [pptosLoading, setPptosLoading] = useState(false);
   const [pptoView, setPptoView] = useState("");
   const [selectedPpto, setSelectedPpto] = useState(null);
@@ -204,8 +224,18 @@ export default function DashboardSemaforo() {
     }
   }
 
+  async function loadAllPptos() {
+    try {
+      const data = await fetchJson(PPTOS_API);
+      if (data.ok) setAllPptosData(data.pptos || []);
+    } catch (err) {
+      console.error("Error cargando todos los PPTOS", err);
+    }
+  }
+
   useEffect(() => {
     loadAllLocals();
+    loadAllPptos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -220,14 +250,20 @@ export default function DashboardSemaforo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocal]);
 
+  const isGroupPage = selectedGroup !== "TODOS" && selectedLocal === "TODOS";
   const isLocalPage = selectedLocal !== "TODOS";
 
   const selectedLocalData = useMemo(() => localsData.find((item) => item.local === selectedLocal) || null, [localsData, selectedLocal]);
 
+  const groupLocals = useMemo(() => {
+    if (selectedGroup === "TODOS") return localsData;
+    return localsData.filter((item) => getBusinessGroup({ local: item.local }) === selectedGroup);
+  }, [localsData, selectedGroup]);
+
   const visibleLocals = useMemo(() => {
-    if (selectedLocal === "TODOS") return localsData;
+    if (selectedLocal === "TODOS") return groupLocals;
     return selectedLocalData ? [selectedLocalData] : [];
-  }, [localsData, selectedLocal, selectedLocalData]);
+  }, [groupLocals, selectedLocal, selectedLocalData]);
 
   const allAssets = useMemo(() => visibleLocals.flatMap((local) => (local.assets || []).map((asset) => ({ ...asset, local: local.local }))), [visibleLocals]);
 
@@ -253,6 +289,34 @@ export default function DashboardSemaforo() {
 
   const categoryLabel = CATEGORIES.find((cat) => cat.id === assetCategory)?.label || "Activos";
   const detailTitle = activeView === "CATEGORIA" ? `Listado de ${categoryLabel.toLowerCase()}` : activeView === "ACTIVOS" ? "Listado de activos totales" : activeView === "OPERATIVOS" ? "Listado de equipos operativos" : activeView === "OBSERVADOS" ? "Listado de equipos observados" : activeView === "CRITICOS" ? "Listado de fallas críticas" : "";
+
+  const filteredAllPptosByGroup = useMemo(() => {
+    if (selectedGroup === "TODOS") return allPptosData;
+    return allPptosData.filter((p) => getBusinessGroup(p) === selectedGroup);
+  }, [allPptosData, selectedGroup]);
+
+  function countPptosByEstado(list, type) {
+    return list.filter((p) => {
+      const estado = String(p.estado || "").toUpperCase().trim();
+      if (type === "ENVIADOS") return estado === "ENVIADO";
+      if (type === "APROBADOS") return estado === "PENDIENTE" || estado === "EN EJECUCION" || estado === "EN EJECUCIÓN";
+      if (type === "EJECUTADOS") return estado === "EJECUTADO";
+      return false;
+    }).length;
+  }
+
+  const groupPptosSummary = useMemo(() => {
+    return BUSINESS_GROUPS.map((group) => {
+      const list = allPptosData.filter((p) => getBusinessGroup(p) === group.id);
+      return {
+        ...group,
+        total: list.length,
+        enviados: countPptosByEstado(list, "ENVIADOS"),
+        aprobados: countPptosByEstado(list, "APROBADOS"),
+        ejecutados: countPptosByEstado(list, "EJECUTADOS"),
+      };
+    });
+  }, [allPptosData]);
 
   const pptoYears = useMemo(() => {
     const years = new Set();
@@ -288,6 +352,18 @@ export default function DashboardSemaforo() {
   const pptoTitle = pptoView === "ENVIADOS" ? "Presupuestos enviados" : pptoView === "APROBADOS" ? "Presupuestos aprobados" : pptoView === "EJECUTADOS" ? "Presupuestos ejecutados" : "";
   const semaforoGeneral = summary.criticos > 0 ? "ROJO" : summary.observados > 0 ? "AMARILLO" : "VERDE";
   const semTone = getTone(semaforoGeneral);
+
+  function openGroup(groupId) {
+    setSelectedGroup(groupId);
+    setSelectedLocal("TODOS");
+    setSelectedGroup("TODOS");
+    setActiveView("RESUMEN");
+    setAssetCategory("TODOS");
+    setSearch("");
+    setSelectedAsset(null);
+    setSelectedPpto(null);
+    setPptoView("");
+  }
 
   function openLocal(localName) {
     setSelectedLocal(localName);
@@ -332,6 +408,9 @@ export default function DashboardSemaforo() {
         .localButton { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: white; min-height: 72px; text-align: left; box-shadow: 0 14px 30px rgba(0,0,0,.18); }
         .localButton span { font-size: 15px; line-height: 1.2; }
         .localButton:hover { background: rgba(39,223,255,.08); transform: translateY(-1px); }
+        .groupCard { flex-direction: column; align-items: flex-start; justify-content: center; min-height: 110px; }
+        .groupCard span { font-size: 24px; font-weight: 950; }
+        .groupCard small { color: #9fb0c9; font-size: 13px; margin-top: 8px; line-height: 1.4; }
         .dashboardTitle { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 18px; }
         h1 { margin: 0; font-size: 56px; line-height: 1.05; color: #ffffff; font-weight: 950; letter-spacing: .02em; text-shadow: 0 4px 18px rgba(0,0,0,.4); }
         .subtitle { color: #9fb0c9; margin-top: 6px; }
@@ -394,17 +473,40 @@ export default function DashboardSemaforo() {
 
         <section className="dashboardTitle">
           <div>
-            <h1>{selectedLocal === "TODOS" ? "Resumen general" : selectedLocal}</h1>
-            <div className="subtitle">{selectedLocal === "TODOS" ? "Selecciona un local para revisar su estado específico." : "Vista individual del local seleccionado."}</div>
+            <h1>{selectedLocal !== "TODOS" ? selectedLocal : selectedGroup !== "TODOS" ? `Resumen ${BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label}` : "Resumen general"}</h1>
+            <div className="subtitle">{selectedLocal !== "TODOS" ? "Vista individual del local seleccionado." : selectedGroup !== "TODOS" ? "Resumen filtrado por formato de local." : "Resumen general de activos y presupuestos."}</div>
           </div>
         </section>
 
         {error ? <div className="error">⚠ {error}</div> : null}
 
         {!isLocalPage ? (
-          <section className="localTabs">
-            {localsData.map((local) => <LocalButton key={local.local} local={local} onClick={() => openLocal(local.local)} />)}
-          </section>
+          <>
+            <section className="localTabs">
+              {groupPptosSummary.map((group) => (
+                <button key={group.id} type="button" className="localButton groupCard" onClick={() => openGroup(group.id)}>
+                  <span>{group.label}</span>
+                  <small>Enviados: {group.enviados} | Aprobados: {group.aprobados} | Ejecutados: {group.ejecutados}</small>
+                </button>
+              ))}
+            </section>
+
+            <section className="panel tablePanel">
+              <div className="filterRow">
+                <div>
+                  <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
+                  <div className="hint" style={{ textAlign: "left" }}>Elige un local desde el menú para abrir su vista individual.</div>
+                </div>
+                <label className="filterControl">
+                  Local
+                  <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
+                    <option value="">Seleccionar local</option>
+                    {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
+                  </select>
+                </label>
+              </div>
+            </section>
+          </>
         ) : null}
 
         {isLocalPage ? (
