@@ -411,6 +411,7 @@ export default function DashboardSemaforo() {
         .groupCard { flex-direction: column; align-items: flex-start; justify-content: center; min-height: 110px; }
         .groupCard span { font-size: 24px; font-weight: 950; }
         .groupCard small { color: #9fb0c9; font-size: 13px; margin-top: 8px; line-height: 1.4; }
+        .groupCardActive { border-color: rgba(39,223,255,.75) !important; background: rgba(39,223,255,.12) !important; box-shadow: 0 0 0 1px rgba(39,223,255,.28), 0 18px 40px rgba(0,0,0,.22); }
         .dashboardTitle { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 18px; }
         h1 { margin: 0; font-size: 56px; line-height: 1.05; color: #ffffff; font-weight: 950; letter-spacing: .02em; text-shadow: 0 4px 18px rgba(0,0,0,.4); }
         .subtitle { color: #9fb0c9; margin-top: 6px; }
@@ -466,7 +467,7 @@ export default function DashboardSemaforo() {
           </div>
           <div className="actions">
             {progress ? <div className="progress small">{progress}</div> : null}
-            {isLocalPage ? <button className="backButton" onClick={goBack}>← Volver</button> : null}
+            {(isLocalPage || isGroupPage) ? <button className="backButton" onClick={goBack}>← Volver</button> : null}
             <button onClick={loadAllLocals} disabled={loading}>{loading ? "Actualizando..." : "Actualizar datos"}</button>
           </div>
         </header>
@@ -484,8 +485,14 @@ export default function DashboardSemaforo() {
           <>
             <section className="localTabs">
               {BUSINESS_GROUPS.map((group) => (
-                <button key={group.id} type="button" className="localButton groupCard" onClick={() => openGroup(group.id)}>
+                <button
+                  key={group.id}
+                  type="button"
+                  className={`localButton groupCard ${selectedGroup === group.id ? "groupCardActive" : ""}`}
+                  onClick={() => openGroup(group.id)}
+                >
                   <span>{group.label}</span>
+                  <small>Entrar al resumen de {group.label}</small>
                 </button>
               ))}
             </section>
