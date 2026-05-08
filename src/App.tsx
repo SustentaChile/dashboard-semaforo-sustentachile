@@ -491,22 +491,6 @@ export default function DashboardSemaforo() {
           </div>
         </section>
 
-        {selectedGroup !== "TODOS" && selectedLocal === "TODOS" ? (
-          <section className="panel tablePanel" style={{ borderColor: "rgba(39,223,255,.45)", background: "rgba(39,223,255,.08)" }}>
-            <div className="filterRow">
-              <div>
-                <div className="panelTitle" style={{ textAlign: "left" }}>
-                  Estás dentro de: {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label || selectedGroup}
-                </div>
-                <div className="hint" style={{ textAlign: "left" }}>
-                  El resumen, la salud general y los presupuestos se muestran solo para este grupo.
-                </div>
-              </div>
-              <button className="backButton" onClick={goBack}>← Volver al resumen general</button>
-            </div>
-          </section>
-        ) : null}
-
         {error ? <div className="error">⚠ {error}</div> : null}
 
         {!isLocalPage ? (
@@ -549,24 +533,6 @@ export default function DashboardSemaforo() {
                 </div>
               </section>
             )}
-
-            {selectedGroup !== "TODOS" ? (
-              <section className="panel tablePanel">
-                <div className="filterRow">
-                  <div>
-                    <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
-                    <div className="hint" style={{ textAlign: "left" }}>Elige un local de {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label} para abrir su vista individual.</div>
-                  </div>
-                  <label className="filterControl">
-                    Local
-                    <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
-                      <option value="">Seleccionar local</option>
-                      {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
-                    </select>
-                  </label>
-                </div>
-              </section>
-            ) : null}
           </>
         ) : null}
 
