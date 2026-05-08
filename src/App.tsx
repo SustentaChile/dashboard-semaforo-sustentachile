@@ -375,15 +375,26 @@ export default function DashboardSemaforo() {
   }
 
   function goBack() {
+
+  // SI ESTÁ DENTRO DE UN LOCAL
+  if (selectedLocal !== "TODOS") {
     setSelectedLocal("TODOS");
-    setSelectedGroup("TODOS");
-    setActiveView("RESUMEN");
-    setAssetCategory("TODOS");
-    setSearch("");
-    setSelectedAsset(null);
     setSelectedPpto(null);
     setPptoView("");
+    setSelectedAsset(null);
+    return;
   }
+
+  // SI ESTÁ DENTRO DE UN GRUPO
+  if (selectedGroup !== "TODOS") {
+    setSelectedGroup("TODOS");
+    setSelectedPpto(null);
+    setPptoView("");
+    setSelectedAsset(null);
+    return;
+  }
+
+}
 
   return (
     <div className="app">
@@ -469,7 +480,29 @@ export default function DashboardSemaforo() {
           </div>
           <div className="actions">
             {progress ? <div className="progress small">{progress}</div> : null}
-            {(isLocalPage || isGroupPage) ? <button className="backButton" onClick={goBack}>← Volver</button> : null}
+            {(isLocalPage || isGroupPage) ? (
+              <div style={{ display: "flex", gap: 12 }}>
+
+                <button className="backButton" onClick={goBack}>
+                  ← Volver
+                </button>
+
+                <button
+                  className="backButton"
+                  onClick={() => {
+                    setSelectedGroup("TODOS");
+                    setSelectedLocal("TODOS");
+                    setSelectedPpto(null);
+                    setPptoView("");
+                    setSelectedAsset(null);
+                    setActiveView("RESUMEN");
+                  }}
+                >
+                  ⌂ Inicio
+                </button>
+
+              </div>
+            ) : null}
             <button onClick={loadAllLocals} disabled={loading}>{loading ? "Actualizando..." : "Actualizar datos"}</button>
           </div>
         </header>
