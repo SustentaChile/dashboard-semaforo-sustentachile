@@ -406,7 +406,7 @@ export default function DashboardSemaforo() {
         .header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 22px; }
         .brand { display: flex; align-items: center; gap: 14px; }
         .mainLogo{
-          height:72px;
+          height:105px;
           width:auto;
           object-fit:contain;
           display:block;
