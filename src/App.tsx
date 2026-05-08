@@ -240,13 +240,9 @@ export default function DashboardSemaforo() {
   }, []);
 
   useEffect(() => {
-    if (selectedLocal === "TODOS") {
-      setPptosData([]);
-      setPptoView("");
-      setSelectedPpto(null);
-      return;
+    if (selectedLocal !== "TODOS") {
+      loadPptos(selectedLocal);
     }
-    loadPptos(selectedLocal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocal]);
 
@@ -349,7 +345,6 @@ export default function DashboardSemaforo() {
     return [];
   }, [pptoView, presupuestosEnviados, presupuestosAprobados, presupuestosEjecutados]);
 
-  const pptoTitle = pptoView === "ENVIADOS" ? "Presupuestos enviados" : pptoView === "APROBADOS" ? "Presupuestos aprobados" : pptoView === "EJECUTADOS" ? "Presupuestos ejecutados" : "";
   const semaforoGeneral = summary.criticos > 0 ? "ROJO" : summary.observados > 0 ? "AMARILLO" : "VERDE";
   const semTone = getTone(semaforoGeneral);
 
