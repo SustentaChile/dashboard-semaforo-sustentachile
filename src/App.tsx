@@ -483,19 +483,35 @@ export default function DashboardSemaforo() {
 
         {!isLocalPage ? (
           <>
-            <section className="localTabs">
-              {BUSINESS_GROUPS.map((group) => (
-                <button
-                  key={group.id}
-                  type="button"
-                  className={`localButton groupCard ${selectedGroup === group.id ? "groupCardActive" : ""}`}
-                  onClick={() => openGroup(group.id)}
-                >
-                  <span>{group.label}</span>
-                  <small>Entrar al resumen de {group.label}</small>
-                </button>
-              ))}
-            </section>
+            {selectedGroup === "TODOS" ? (
+              <section className="localTabs">
+                {BUSINESS_GROUPS.map((group) => (
+                  <button
+                    key={group.id}
+                    type="button"
+                    className="localButton groupCard"
+                    onClick={() => openGroup(group.id)}
+                  >
+                    <span>{group.label}</span>
+                    <small>Entrar al resumen de {group.label}</small>
+                  </button>
+                ))}
+              </section>
+            ) : (
+              <section className="panel tablePanel">
+                <div className="filterRow">
+                  <div>
+                    <div className="panelTitle" style={{ textAlign: "left" }}>
+                      Estás viendo: {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label}
+                    </div>
+                    <div className="hint" style={{ textAlign: "left" }}>
+                      El resumen superior y los presupuestos están filtrados solo por este grupo.
+                    </div>
+                  </div>
+                  <button className="backButton" onClick={goBack}>← Volver al resumen general</button>
+                </div>
+              </section>
+            )}
 
             {selectedGroup !== "TODOS" ? (
               <section className="panel tablePanel">
