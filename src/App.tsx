@@ -314,22 +314,27 @@ export default function DashboardSemaforo() {
     });
   }, [allPptosData]);
 
+  const basePptosScope = useMemo(() => {
+    if (selectedLocal !== "TODOS") return pptosData;
+    return filteredAllPptosByGroup;
+  }, [selectedLocal, pptosData, filteredAllPptosByGroup]);
+
   const pptoYears = useMemo(() => {
     const years = new Set();
-    pptosData.forEach((p) => {
+    basePptosScope.forEach((p) => {
       const year = getYearFromDate(p.fechaPpto) || getYearFromDate(p.fechaOc) || getYearFromDate(p.fechaEjecucion);
       if (year) years.add(year);
     });
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
-  }, [pptosData]);
+  }, [basePptosScope]);
 
   const pptosFiltradosPorFecha = useMemo(() => {
-    if (!pptoYearFilter || pptoYearFilter === "TODOS") return pptosData;
-    return pptosData.filter((p) => {
+    if (!pptoYearFilter || pptoYearFilter === "TODOS") return basePptosScope;
+    return basePptosScope.filter((p) => {
       const year = getYearFromDate(p.fechaPpto) || getYearFromDate(p.fechaOc) || getYearFromDate(p.fechaEjecucion);
       return year === pptoYearFilter;
     });
-  }, [pptosData, pptoYearFilter]);
+  }, [basePptosScope, pptoYearFilter]);
 
   const presupuestosEnviados = useMemo(() => pptosFiltradosPorFecha.filter((p) => String(p.estado || "").toUpperCase().trim() === "ENVIADO"), [pptosFiltradosPorFecha]);
   const presupuestosAprobados = useMemo(() => pptosFiltradosPorFecha.filter((p) => {
@@ -478,29 +483,30 @@ export default function DashboardSemaforo() {
         {!isLocalPage ? (
           <>
             <section className="localTabs">
-              {groupPptosSummary.map((group) => (
+              {BUSINESS_GROUPS.map((group) => (
                 <button key={group.id} type="button" className="localButton groupCard" onClick={() => openGroup(group.id)}>
                   <span>{group.label}</span>
-                  <small>Enviados: {group.enviados} | Aprobados: {group.aprobados} | Ejecutados: {group.ejecutados}</small>
                 </button>
               ))}
             </section>
 
-            <section className="panel tablePanel">
-              <div className="filterRow">
-                <div>
-                  <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
-                  <div className="hint" style={{ textAlign: "left" }}>Elige un local desde el menú para abrir su vista individual.</div>
+            {selectedGroup !== "TODOS" ? (
+              <section className="panel tablePanel">
+                <div className="filterRow">
+                  <div>
+                    <div className="panelTitle" style={{ textAlign: "left" }}>Seleccionar local</div>
+                    <div className="hint" style={{ textAlign: "left" }}>Elige un local de {BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label} para abrir su vista individual.</div>
+                  </div>
+                  <label className="filterControl">
+                    Local
+                    <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
+                      <option value="">Seleccionar local</option>
+                      {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
+                    </select>
+                  </label>
                 </div>
-                <label className="filterControl">
-                  Local
-                  <select value="" onChange={(event) => event.target.value && openLocal(event.target.value)}>
-                    <option value="">Seleccionar local</option>
-                    {groupLocals.map((local) => <option key={local.local} value={local.local}>{local.local}</option>)}
-                  </select>
-                </label>
-              </div>
-            </section>
+              </section>
+            ) : null}
           </>
         ) : null}
 
@@ -553,101 +559,101 @@ export default function DashboardSemaforo() {
               </div>
             </section>
 
-            {isLocalPage ? (
-              <section className="panel tablePanel">
-                <div className="filterRow">
-                  <div>
-                    <div className="panelTitle" style={{ textAlign: "left" }}>Gestión de presupuestos</div>
-                    <div className="hint" style={{ textAlign: "left" }}>Filtrado por fecha de PPTO, OC o ejecución.</div>
+            <section className="panel tablePanel">
+              <div className="filterRow">
+                <div>
+                  <div className="panelTitle" style={{ textAlign: "left" }}>
+                    {selectedLocal !== "TODOS" ? "Gestión de presupuestos del local" : selectedGroup !== "TODOS" ? `Gestión de presupuestos ${BUSINESS_GROUPS.find((g) => g.id === selectedGroup)?.label}` : "Resumen general de presupuestos y OC"}
                   </div>
-                  <label className="filterControl">
-                    Año
-                    <select value={pptoYearFilter} onChange={(event) => { setPptoYearFilter(event.target.value); setSelectedPpto(null); setPptoView(""); }}>
-                      <option value="TODOS">Todos</option>
-                      {pptoYears.map((year) => <option key={year} value={year}>{year}</option>)}
-                    </select>
-                  </label>
+                  <div className="hint" style={{ textAlign: "left" }}>Filtrado por fecha de PPTO, OC o ejecución.</div>
                 </div>
-                {pptosLoading ? <div className="hint">Cargando presupuestos...</div> : null}
+                <label className="filterControl">
+                  Año
+                  <select value={pptoYearFilter} onChange={(event) => { setPptoYearFilter(event.target.value); setSelectedPpto(null); setPptoView(""); }}>
+                    <option value="TODOS">Todos</option>
+                    {pptoYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
+                </label>
+              </div>
+              {pptosLoading ? <div className="hint">Cargando presupuestos...</div> : null}
 
-                <div className="cards" style={{ marginTop: 18 }}>
-                  <Card title="Presupuestos enviados" value={presupuestosEnviados.length} tone={getTone("AMARILLO")} onClick={() => { setPptoView("ENVIADOS"); setSelectedPpto(null); }} active={pptoView === "ENVIADOS"} />
-                  <Card title="Presupuestos aprobados" value={presupuestosAprobados.length} tone={getTone("OPERATIVO")} onClick={() => { setPptoView("APROBADOS"); setSelectedPpto(null); }} active={pptoView === "APROBADOS"} />
-                  <Card title="Presupuestos ejecutados" value={presupuestosEjecutados.length} tone={getTone("VERDE")} onClick={() => { setPptoView("EJECUTADOS"); setSelectedPpto(null); }} active={pptoView === "EJECUTADOS"} />
-                </div>
+              <div className="cards" style={{ marginTop: 18 }}>
+                <Card title="Presupuestos enviados" value={presupuestosEnviados.length} tone={getTone("AMARILLO")} onClick={() => { setPptoView("ENVIADOS"); setSelectedPpto(null); }} active={pptoView === "ENVIADOS"} />
+                <Card title="Presupuestos aprobados" value={presupuestosAprobados.length} tone={getTone("OPERATIVO")} onClick={() => { setPptoView("APROBADOS"); setSelectedPpto(null); }} active={pptoView === "APROBADOS"} />
+                <Card title="Presupuestos ejecutados" value={presupuestosEjecutados.length} tone={getTone("VERDE")} onClick={() => { setPptoView("EJECUTADOS"); setSelectedPpto(null); }} active={pptoView === "EJECUTADOS"} />
+              </div>
 
-                {pptoView ? (
-                  <div className="tableBox">
-                    {!selectedPpto ? (
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>PPTO</th>
-                            {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
+              {pptoView ? (
+                <div className="tableBox">
+                  {!selectedPpto ? (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>PPTO</th>
+                          {pptoView === "ENVIADOS" ? <th>Fecha PPTO</th> : null}
+                          {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
+                            <>
+                              <th>Fecha OC</th>
+                              <th>OC</th>
+                            </>
+                          ) : null}
+                          <th>Estado</th>
+                          <th>Detalle</th>
+                          {pptoView === "EJECUTADOS" ? <th>Rep. ejecución</th> : null}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pptosList.map((ppto, index) => (
+                          <tr key={`${ppto.ppto}-${index}`} onClick={() => setSelectedPpto(ppto)} style={{ cursor: "pointer" }}>
+                            <td>{ppto.ppto || "-"}</td>
+                            {pptoView === "ENVIADOS" ? <td>{ppto.fechaPpto || "-"}</td> : null}
                             {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
                               <>
-                                <th>Fecha OC</th>
-                                <th>OC</th>
+                                <td>{ppto.fechaOc || "-"}</td>
+                                <td>{ppto.oc || "-"}</td>
                               </>
                             ) : null}
-                            <th>Estado</th>
-                            <th>Detalle</th>
-                            {pptoView === "EJECUTADOS" ? <th>Rep. ejecución</th> : null}
+                            <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
+                            <td>{ppto.detalle || "-"}</td>
+                            {pptoView === "EJECUTADOS" ? <td>{ppto.reporteEjecucion || "-"}</td> : null}
                           </tr>
-                        </thead>
-                        <tbody>
-                          {pptosList.map((ppto, index) => (
-                            <tr key={`${ppto.ppto}-${index}`} onClick={() => setSelectedPpto(ppto)} style={{ cursor: "pointer" }}>
-                              <td>{ppto.ppto || "-"}</td>
-                              {pptoView === "ENVIADOS" ? <td>{ppto.fechaPpto || "-"}</td> : null}
-                              {(pptoView === "APROBADOS" || pptoView === "EJECUTADOS") ? (
-                                <>
-                                  <td>{ppto.fechaOc || "-"}</td>
-                                  <td>{ppto.oc || "-"}</td>
-                                </>
-                              ) : null}
-                              <td style={{ fontWeight: 900 }}>{ppto.estado || "-"}</td>
-                              <td>{ppto.detalle || "-"}</td>
-                              {pptoView === "EJECUTADOS" ? <td>{ppto.reporteEjecucion || "-"}</td> : null}
-                            </tr>
-                          ))}
-                          {!pptosList.length ? (
-                            <tr><td colSpan={10}>No hay presupuestos en esta categoría.</td></tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="assetDetail">
-                        <div className="detailTop">
-                          <button className="backButton" onClick={() => setSelectedPpto(null)}>← Volver al listado</button>
-                          <div className="localBadge">{selectedPpto.estado || "Sin estado"}</div>
-                        </div>
-                        <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del presupuesto</div>
-                        <h2 className="assetTitle">{selectedPpto.ppto || "Sin PPTO"}</h2>
-                        <div className="assetSubtitle">OC: {selectedPpto.oc || "Sin OC"}</div>
-                        <div className="detailGrid">
-                          <div className="detailItem"><span>Local</span><b>{selectedPpto.codigo || ""} - {selectedPpto.local || "-"}</b></div>
-                          <div className="detailItem"><span>Estado</span><b>{selectedPpto.estado || "-"}</b></div>
-                          <div className="detailItem"><span>Fecha PPTO</span><b>{selectedPpto.fechaPpto || "-"}</b></div>
-                          <div className="detailItem"><span>Fecha OC</span><b>{selectedPpto.fechaOc || "-"}</b></div>
-                          <div className="detailItem"><span>Fecha ejecución</span><b>{selectedPpto.fechaEjecucion || "-"}</b></div>
-                          <div className="detailItem"><span>Reporte origen</span><b>{selectedPpto.reporteOrigen || "-"}</b></div>
-                          <div className="detailItem"><span>Reporte ejecución</span><b>{selectedPpto.reporteEjecucion || "-"}</b></div>
-                        </div>
-                        <div className="detailBox">
-                          <div className="panelTitle" style={{ textAlign: "left" }}>Detalle</div>
-                          <p>{selectedPpto.detalle || "Sin detalle registrado."}</p>
-                        </div>
-                        <div className="detailBox">
-                          <div className="panelTitle" style={{ textAlign: "left" }}>Materiales</div>
-                          <p>{selectedPpto.materiales || "Sin materiales registrados."}</p>
-                        </div>
+                        ))}
+                        {!pptosList.length ? (
+                          <tr><td colSpan={10}>No hay presupuestos en esta categoría.</td></tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="assetDetail">
+                      <div className="detailTop">
+                        <button className="backButton" onClick={() => setSelectedPpto(null)}>← Volver al listado</button>
+                        <div className="localBadge">{selectedPpto.estado || "Sin estado"}</div>
                       </div>
-                    )}
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
+                      <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del presupuesto</div>
+                      <h2 className="assetTitle">{selectedPpto.ppto || "Sin PPTO"}</h2>
+                      <div className="assetSubtitle">OC: {selectedPpto.oc || "Sin OC"}</div>
+                      <div className="detailGrid">
+                        <div className="detailItem"><span>Local</span><b>{selectedPpto.codigo || ""} - {selectedPpto.local || "-"}</b></div>
+                        <div className="detailItem"><span>Estado</span><b>{selectedPpto.estado || "-"}</b></div>
+                        <div className="detailItem"><span>Fecha PPTO</span><b>{selectedPpto.fechaPpto || "-"}</b></div>
+                        <div className="detailItem"><span>Fecha OC</span><b>{selectedPpto.fechaOc || "-"}</b></div>
+                        <div className="detailItem"><span>Fecha ejecución</span><b>{selectedPpto.fechaEjecucion || "-"}</b></div>
+                        <div className="detailItem"><span>Reporte origen</span><b>{selectedPpto.reporteOrigen || "-"}</b></div>
+                        <div className="detailItem"><span>Reporte ejecución</span><b>{selectedPpto.reporteEjecucion || "-"}</b></div>
+                      </div>
+                      <div className="detailBox">
+                        <div className="panelTitle" style={{ textAlign: "left" }}>Detalle</div>
+                        <p>{selectedPpto.detalle || "Sin detalle registrado."}</p>
+                      </div>
+                      <div className="detailBox">
+                        <div className="panelTitle" style={{ textAlign: "left" }}>Materiales</div>
+                        <p>{selectedPpto.materiales || "Sin materiales registrados."}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </section>
           </>
         ) : (
           <section className="panel tablePanel">
