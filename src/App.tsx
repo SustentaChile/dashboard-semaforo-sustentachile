@@ -966,25 +966,38 @@ export default function DashboardSemaforo() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Local</th>
                         <th>Descripción</th>
-                        <th>Sección / Central</th>
-                        <th>Estado</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {filteredAssets.map((asset, index) => (
-                        <tr key={`${asset.local}-${asset.section}-${asset.item}-${index}`} onClick={() => setSelectedAsset(asset)} style={{ cursor: "pointer" }}>
-                          <td>{asset.local}</td>
+                        <tr
+                          key={`${asset.local}-${asset.section}-${asset.item}-${index}`}
+                          onClick={() => setSelectedAsset(asset)}
+                          style={{ cursor: "pointer" }}
+                        >
                           <td>
-                            <b>{asset.item || "Sin descripción"}</b>
-                            <div className="hint" style={{ textAlign: "left", marginTop: 4 }}>{asset.tipoActivo || asset.tipo || "Sin tipo de activo"}</div>
+                            <b>{asset.item || asset.descripcion || "Sin descripción"}</b>
                           </td>
-                          <td>{asset.section || "Sin sección"}{asset.central ? ` / ${asset.central}` : ""}</td>
-                          <td style={{ color: getTone(asset.estado).color, fontWeight: 900 }}>{asset.estado}</td>
+
+                          <td
+                            style={{
+                              color: getTone(asset.estado).color,
+                              fontWeight: 900,
+                            }}
+                          >
+                            {asset.estado || "Sin estado"}
+                          </td>
                         </tr>
                       ))}
-                      {!filteredAssets.length ? <tr><td colSpan={4}>Sin datos para mostrar.</td></tr> : null}
+
+                      {!filteredAssets.length ? (
+                        <tr>
+                          <td colSpan={2}>Sin datos para mostrar.</td>
+                        </tr>
+                      ) : null}
                     </tbody>
                   </table>
                 </div>
