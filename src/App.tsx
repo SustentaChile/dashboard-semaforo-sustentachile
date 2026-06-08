@@ -977,6 +977,7 @@ export default function DashboardSemaforo() {
             height: 70px;
           }
         }
+      `}</style>
       <div className="page">
         <header className="header">
           <div className="brand">
