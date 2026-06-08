@@ -310,7 +310,7 @@ function AssetPhotos({ asset, onExpandPhoto }) {
             <button
               key={photo.index}
               type="button"
-              onClick={() => setExpandedPhoto(photo)}
+              onClick={() => onExpandPhoto(photo)}
               style={{
                 display: "block",
                 border: "1px solid rgba(255,255,255,.12)",
