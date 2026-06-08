@@ -1,21 +1,20 @@
 // @ts-nocheck
 import React, { useMemo, useState, useEffect } from "react";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyvj4Ao28AJQnQX8-lnBI-oY8D0P9W5026YqjwQfFWbCJ2J-tFdc-hc8_DryFsKeFud/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyHN_YbDbr6pVzibcd62wgKuqnIS2xyUGIaWiV8XeSYjJ_2RV7mGupuQTit0W23Qpkm/exec";
 const PPTOS_API = `${API_URL}?action=pptos`;
 
 const BUSINESS_GROUPS = [
   { id: "JUMBO", label: "Jumbo" },
-  { id: "DS", label: "Dark Store" },
+  { id: "DARK_STORE", label: "Dark Store" },
   { id: "SPID", label: "SPID" },
 ];
 
 const CATEGORIES = [
   { id: "TODOS", label: "Todos" },
-  { id: "COMPRESORES", label: "Compresores" },
+  { id: "CENTRAL", label: "Central" },
   { id: "CONDENSADORES", label: "Condensadores" },
-  { id: "MUEBLES_REMOTOS", label: "Muebles remotos" },
-  { id: "AUTONOMAS", label: "Autónomas" },
+  { id: "ACTIVOS_COMERCIALES", label: "Activos comerciales" },
 ];
 
 function cleanApiUrl(url) {
@@ -27,21 +26,29 @@ function makeUrl(base, params) {
 }
 
 function getTone(value) {
-  if (value === "ROJO" || value === "FALLA CRITICA") {
+  const estado = String(value || "").toUpperCase().trim();
+
+  if (estado === "ROJO" || estado === "FALLA CRITICA" || estado === "CRITICO") {
     return { color: "#ff4257", bg: "rgba(255,66,87,.14)", border: "rgba(255,66,87,.28)" };
   }
-  if (value === "AMARILLO" || value === "OBSERVADO") {
+
+  if (estado === "AMARILLO" || estado === "OBSERVADO") {
     return { color: "#ffc928", bg: "rgba(255,201,40,.14)", border: "rgba(255,201,40,.28)" };
   }
-  return { color: "#20d071", bg: "rgba(32,208,113,.14)", border: "rgba(32,208,113,.28)" };
+
+  if (estado === "VERDE" || estado === "OPERATIVO") {
+    return { color: "#20d071", bg: "rgba(32,208,113,.14)", border: "rgba(32,208,113,.28)" };
+  }
+
+  return { color: "#94a3b8", bg: "rgba(148,163,184,.14)", border: "rgba(148,163,184,.28)" };
 }
 
 function normalizeSummary(summary) {
-  const total = summary?.total || 0;
-  const criticos = summary?.criticos || 0;
-  const observados = summary?.observados || 0;
-  const operativos = Math.max(0, total - criticos);
-  const equiposSinDetalle = Math.max(0, total - criticos - observados);
+  const total = Number(summary?.total || 0);
+  const criticos = Number(summary?.criticos || 0);
+  const observados = Number(summary?.observados || 0);
+  const operativos = Number(summary?.operativos ?? Math.max(0, total - criticos - observados));
+  const equiposSinDetalle = operativos;
   const porcentajeSinDetalle = total ? Number(((equiposSinDetalle / total) * 100).toFixed(1)) : 0;
   const saludGeneral = total ? Number((((total - criticos) / total) * 100).toFixed(1)) : 0;
 
@@ -89,29 +96,86 @@ function getYearFromDate(value) {
 }
 
 function getBusinessGroup(item) {
-  const code = String(item?.codigo || item?.cod || "").trim().toUpperCase();
-  const text = [item?.local, item?.localDashboard, item?.localOriginal, item?.name]
+  const code = String(item?.codigo || item?.cod || item?.COD_LOCAL || "").trim().toUpperCase();
+  const grupo = String(item?.grupo || item?.GRUPO || "").trim().toUpperCase();
+  const text = [item?.local, item?.localDashboard, item?.localOriginal, item?.name, item?.LOCAL]
     .join(" ")
     .toUpperCase();
 
-  if (["J411", "J414"].includes(code) || text.includes("DARK STORE") || text.includes("DS ")) return "DS";
+  if (grupo === "DARK_STORE" || grupo === "DS") return "DARK_STORE";
+  if (grupo === "JUMBO") return "JUMBO";
+  if (grupo === "SPID") return "SPID";
+
+  if (["J411", "J414"].includes(code) || text.includes("DARK STORE") || text.includes("DS ")) return "DARK_STORE";
   if (["J501", "J511", "J514", "J762", "J988", "J992"].includes(code) || text.includes("JUMBO")) return "JUMBO";
   if (text.includes("SPID")) return "SPID";
   return "OTROS";
 }
 
 function getAssetCategory(asset) {
-  const text = [asset.section, asset.claseActivo, asset.tipo, asset.modelo, asset.observacion, asset.pendiente]
-    .join(" ")
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  const area = String(asset.section || asset.AREA || "").toUpperCase().trim();
 
-  if (text.includes("COMPRESOR") || text.includes("SEMI-HERMETICO") || text.includes("CENTRAL MEDIA") || text.includes("CENTRAL BAJA")) return "COMPRESORES";
-  if (text.includes("CONDENSADOR") || text.includes("VENTILADOR") || text.includes("AXIAL")) return "CONDENSADORES";
-  if (text.includes("AUTONOMA") || text.includes("AUTONOMO") || text.includes("AUTONOMAS")) return "AUTONOMAS";
-  if (text.includes("MUEBLE") || text.includes("MUEBLES") || text.includes("REMOTO") || text.includes("VITRINA") || text.includes("MURAL") || text.includes("EXHIBICION")) return "MUEBLES_REMOTOS";
-  return "OTROS";
+  if (area === "CENTRAL") return "CENTRAL";
+  if (area === "CONDENSADORES") return "CONDENSADORES";
+  if (area === "ACTIVOS_COMERCIALES") return "ACTIVOS_COMERCIALES";
+
+  return "TODOS";
+}
+
+function normalizeEstadoFromApi(value) {
+  const estado = String(value || "").toUpperCase().trim();
+
+  if (estado === "CRITICO" || estado === "FALLA CRITICA") return "FALLA CRITICA";
+  if (estado === "OBSERVADO") return "OBSERVADO";
+  if (estado === "OPERATIVO") return "OPERATIVO";
+
+  return "OPERATIVO";
+}
+
+function normalizeAssetFromApi(asset, localName = "") {
+  const estado = normalizeEstadoFromApi(asset.estado || asset.STATUS);
+
+  return {
+    ...asset,
+    id: asset.ID_ACTIVO || asset.id || "",
+    codLocal: asset.COD_LOCAL || asset.codLocal || "",
+    local: localName || asset.local || asset.LOCAL || "",
+    grupo: asset.GRUPO || asset.grupo || "",
+    codigoCencosud: asset.CODIGO_CENCOSUD || "",
+    section: asset.section || asset.AREA || "",
+    central: asset.CENTRAL || asset.central || "",
+    item: asset.item || asset.DESCRIPCION || "",
+    tipoActivo: asset.TIPO_ACTIVO || asset.claseActivo || "",
+    tipo: asset.tipo || asset.TIPO_ACTIVO || asset.TIPO || "",
+    caracteristica: asset.TIPO || "",
+    marca: asset.MARCA || "",
+    modelo: asset.modelo || asset.MODELO || "",
+    serie: asset.SERIE || "",
+    observacion: asset.observacion || asset.OBSERVACIONES || "",
+    pendiente: asset.pendiente || asset.PENDIENTES || "",
+    estado,
+    claseActivo: asset.claseActivo || asset.TIPO_ACTIVO || "",
+    marcaComp: asset.MARCA_COMP || "",
+    modeloComp: asset.MODELO_COMP || "",
+    foto1: asset.FOTO_1 || "",
+    foto2: asset.FOTO_2 || "",
+    foto3: asset.FOTO_3 || "",
+    tecnico: asset.TECNICO || "",
+    fechaActualizacion: asset.FECHA_ACTUALIZACION || "",
+  };
+}
+
+function normalizeLocalFromApi(local) {
+  return {
+    raw: local,
+    codigo: local.COD_LOCAL || local.codigo || local.cod || "",
+    cod: local.COD_LOCAL || local.codigo || local.cod || "",
+    local: local.LOCAL || local.local || local.name || "Sin local",
+    grupo: local.GRUPO || local.grupo || getBusinessGroup(local),
+    activo: local.ACTIVO || local.activo || "SI",
+    assets: [],
+    summary: normalizeSummary({ total: 0, operativos: 0, observados: 0, criticos: 0 }),
+  };
 }
 
 function Card({ title, value, tone, onClick, active }) {
@@ -179,34 +243,38 @@ export default function DashboardSemaforo() {
     const url = cleanApiUrl(API_URL);
     setLoading(true);
     setError("");
-    setProgress("Buscando hojas del archivo...");
+    setProgress("Cargando locales y activos...");
+
     try {
-      const localsResponse = await fetchJson(makeUrl(url, { action: "locals" }));
-      if (!localsResponse.ok) throw new Error(localsResponse.error || localsResponse.message || "No se pudo obtener la lista de locales.");
+      const data = await fetchJson(makeUrl(url, { action: "all" }));
+      if (!data.ok) throw new Error(data.error || data.message || "No se pudo obtener la información del dashboard.");
 
-      const sheetNames = (localsResponse.sheets || []).filter((name) => name && name !== "LogsAccesos" && name !== "BASE_EQUIPOS" && name !== "RESUMEN_LOCALES" && name !== "DASHBOARD");
-      if (!sheetNames.length) throw new Error("No se encontraron hojas/locales en el archivo.");
+      const localesApi = Array.isArray(data.locales) ? data.locales : [];
+      const activosApi = Array.isArray(data.activos) ? data.activos : [];
 
-      const results = [];
-      const failed = [];
-      for (let i = 0; i < sheetNames.length; i++) {
-        const sheet = sheetNames[i];
-        setProgress(`Cargando ${i + 1} de ${sheetNames.length}: ${sheet}`);
-        try {
-          const localJson = await fetchJson(makeUrl(url, { sheet }));
-          if (localJson.ok) results.push({ ...localJson, summary: normalizeSummary(localJson.summary) });
-          else failed.push(`${sheet}: ${localJson.error || localJson.message || "error"}`);
-        } catch (err) {
-          failed.push(`${sheet}: ${err.message}`);
-        }
-      }
+      const normalizedLocals = localesApi.map(normalizeLocalFromApi);
+      const activosNormalizados = activosApi.map((asset) => normalizeAssetFromApi(asset));
 
-      if (!results.length) throw new Error("No se pudo cargar ningún local.");
+      const results = normalizedLocals.map((local) => {
+        const localAssets = activosNormalizados
+          .filter((asset) => {
+            const assetCode = String(asset.codLocal || asset.COD_LOCAL || "").trim().toUpperCase();
+            const localCode = String(local.codigo || local.cod || "").trim().toUpperCase();
+            return assetCode && localCode && assetCode === localCode;
+          })
+          .map((asset) => normalizeAssetFromApi(asset, local.local));
+
+        return {
+          ...local,
+          assets: localAssets,
+          summary: buildSummaryFromAssets(localAssets),
+        };
+      });
+
       setLocalsData(results);
-      setProgress(`Locales cargados: ${results.length}${failed.length ? ` | Fallidos: ${failed.length}` : ""}`);
-      if (failed.length) setError(`Algunos locales no cargaron: ${failed.slice(0, 3).join(" | ")}${failed.length > 3 ? "..." : ""}`);
+      setProgress(`Locales cargados: ${results.length} | Activos cargados: ${activosNormalizados.length}`);
     } catch (err) {
-      setError(err.message || "No se pudieron cargar los locales.");
+      setError(err.message || "No se pudieron cargar los locales y activos.");
       setProgress("");
     } finally {
       setLoading(false);
@@ -257,7 +325,7 @@ export default function DashboardSemaforo() {
 
   const groupLocals = useMemo(() => {
     if (selectedGroup === "TODOS") return localsData;
-    return localsData.filter((item) => getBusinessGroup({ local: item.local }) === selectedGroup);
+    return localsData.filter((item) => getBusinessGroup(item) === selectedGroup);
   }, [localsData, selectedGroup]);
 
   const visibleLocals = useMemo(() => {
@@ -899,8 +967,8 @@ export default function DashboardSemaforo() {
                     <thead>
                       <tr>
                         <th>Local</th>
-                        <th>Tipo</th>
-                        <th>Modelo</th>
+                        <th>Descripción</th>
+                        <th>Sección / Central</th>
                         <th>Estado</th>
                       </tr>
                     </thead>
@@ -908,8 +976,11 @@ export default function DashboardSemaforo() {
                       {filteredAssets.map((asset, index) => (
                         <tr key={`${asset.local}-${asset.section}-${asset.item}-${index}`} onClick={() => setSelectedAsset(asset)} style={{ cursor: "pointer" }}>
                           <td>{asset.local}</td>
-                          <td>{asset.tipo || "Sin tipo"}</td>
-                          <td>{asset.modelo || "Sin modelo"}</td>
+                          <td>
+                            <b>{asset.item || "Sin descripción"}</b>
+                            <div className="hint" style={{ textAlign: "left", marginTop: 4 }}>{asset.tipoActivo || asset.tipo || "Sin tipo de activo"}</div>
+                          </td>
+                          <td>{asset.section || "Sin sección"}{asset.central ? ` / ${asset.central}` : ""}</td>
                           <td style={{ color: getTone(asset.estado).color, fontWeight: 900 }}>{asset.estado}</td>
                         </tr>
                       ))}
@@ -925,25 +996,57 @@ export default function DashboardSemaforo() {
                   <button className="backButton" onClick={() => setSelectedAsset(null)}>← Volver al listado</button>
                   <div className="localBadge" style={{ color: getTone(selectedAsset.estado).color, background: getTone(selectedAsset.estado).bg, borderColor: getTone(selectedAsset.estado).border }}>{selectedAsset.estado}</div>
                 </div>
-                <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del equipo</div>
-                <h2 className="assetTitle">{selectedAsset.tipo || "Equipo"}</h2>
-                <div className="assetSubtitle">{selectedAsset.modelo || "Sin modelo registrado"}</div>
+                <div className="panelTitle" style={{ textAlign: "left" }}>Detalle del activo</div>
+                <h2 className="assetTitle">{selectedAsset.item || "Activo sin descripción"}</h2>
+                <div className="assetSubtitle">
+                  {selectedAsset.tipoActivo || selectedAsset.tipo || "Sin tipo de activo"}
+                  {selectedAsset.central ? ` · Central ${selectedAsset.central}` : ""}
+                </div>
                 <div className="detailGrid">
                   <div className="detailItem"><span>Local</span><b>{selectedAsset.local || "Sin local"}</b></div>
-                  <div className="detailItem"><span>Tipo</span><b>{selectedAsset.tipo || "Sin tipo"}</b></div>
-                  <div className="detailItem"><span>Modelo</span><b>{selectedAsset.modelo || "Sin modelo"}</b></div>
-                  <div className="detailItem"><span>Estado</span><b style={{ color: getTone(selectedAsset.estado).color }}>{selectedAsset.estado || "Sin estado"}</b></div>
+                  <div className="detailItem"><span>Código local</span><b>{selectedAsset.codLocal || selectedAsset.COD_LOCAL || "N/A"}</b></div>
+                  <div className="detailItem"><span>Código Cencosud</span><b>{selectedAsset.codigoCencosud || selectedAsset.CODIGO_CENCOSUD || "N/A"}</b></div>
                   <div className="detailItem"><span>Sección</span><b>{selectedAsset.section || "Sin sección"}</b></div>
-                  <div className="detailItem"><span>Ítem</span><b>{selectedAsset.item || "-"}</b></div>
+                  <div className="detailItem"><span>Central</span><b>{selectedAsset.central || "N/A"}</b></div>
+                  <div className="detailItem"><span>Tipo activo</span><b>{selectedAsset.tipoActivo || selectedAsset.tipo || "N/A"}</b></div>
+                  <div className="detailItem"><span>Tipo / característica</span><b>{selectedAsset.caracteristica || selectedAsset.TIPO || "N/A"}</b></div>
+                  <div className="detailItem"><span>Marca</span><b>{selectedAsset.marca || selectedAsset.MARCA || "N/A"}</b></div>
+                  <div className="detailItem"><span>Modelo</span><b>{selectedAsset.modelo || "N/A"}</b></div>
+                  <div className="detailItem"><span>Serie</span><b>{selectedAsset.serie || selectedAsset.SERIE || "N/A"}</b></div>
+                  <div className="detailItem"><span>Marca compresor</span><b>{selectedAsset.marcaComp || selectedAsset.MARCA_COMP || "N/A"}</b></div>
+                  <div className="detailItem"><span>Modelo compresor</span><b>{selectedAsset.modeloComp || selectedAsset.MODELO_COMP || "N/A"}</b></div>
+                  <div className="detailItem"><span>Estado</span><b style={{ color: getTone(selectedAsset.estado).color }}>{selectedAsset.estado || "Sin estado"}</b></div>
+                  <div className="detailItem"><span>Técnico</span><b>{selectedAsset.tecnico || selectedAsset.TECNICO || "N/A"}</b></div>
+                  <div className="detailItem"><span>Fecha actualización</span><b>{selectedAsset.fechaActualizacion || selectedAsset.FECHA_ACTUALIZACION || "N/A"}</b></div>
                 </div>
                 <div className="detailBox">
                   <div className="panelTitle" style={{ textAlign: "left" }}>Detalle / observación</div>
                   <p>{selectedAsset.observacion || "Sin observaciones registradas."}</p>
                 </div>
                 <div className="detailBox">
-                  <div className="panelTitle" style={{ textAlign: "left" }}>Pendiente</div>
+                  <div className="panelTitle" style={{ textAlign: "left" }}>Estado de revisión</div>
                   <p>{selectedAsset.pendiente || "Sin pendientes registrados."}</p>
                 </div>
+
+                {(selectedAsset.foto1 || selectedAsset.foto2 || selectedAsset.foto3) ? (
+                  <div className="detailBox">
+                    <div className="panelTitle" style={{ textAlign: "left" }}>Fotos</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
+                      {[selectedAsset.foto1, selectedAsset.foto2, selectedAsset.foto3].filter(Boolean).map((foto, index) => (
+                        <a
+                          key={index}
+                          href={foto}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="backButton"
+                          style={{ textDecoration: "none", display: "inline-block" }}
+                        >
+                          Foto {index + 1}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
           </section>
