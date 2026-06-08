@@ -860,9 +860,123 @@ export default function DashboardSemaforo() {
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: left; vertical-align: top; }
         th { color: #dbeafe; background: #101827; position: sticky; top: 0; z-index: 2; font-weight: 900; }
-        @media (max-width: 1000px) { .cards { grid-template-columns: repeat(2, 1fr); } .mainGrid { grid-template-columns: 1fr; } .header, .dashboardTitle { flex-direction: column; align-items: stretch; } h1 { font-size: 32px; } }
-      `}</style>
+        @media (max-width: 1000px) { 
+          .cards { 
+            grid-template-columns: repeat(2, 1fr); 
+          } 
 
+          .mainGrid { 
+            grid-template-columns: 1fr; 
+          } 
+
+          .header, 
+          .dashboardTitle { 
+            flex-direction: column; 
+            align-items: stretch; 
+          } 
+
+          h1 { 
+            font-size: 32px; 
+          }
+
+          .detailGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .assetTitle {
+            font-size: 28px;
+          }
+
+          .assetSubtitle {
+            font-size: 14px;
+          }
+
+          .page {
+            padding: 14px;
+          }
+
+          .panel {
+            padding: 16px;
+            border-radius: 20px;
+          }
+
+          .detailItem {
+            padding: 12px;
+          }
+
+          .detailItem b {
+            font-size: 14px;
+            word-break: break-word;
+          }
+
+          .detailTop {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .tableHeader {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .cards {
+            gap: 10px;
+          }
+
+          .card {
+            padding: 14px;
+            min-height: 100px;
+            border-radius: 20px;
+          }
+
+          .cardValue {
+            font-size: 28px;
+          }
+
+          .cardTitle {
+            font-size: 10px;
+            letter-spacing: .14em;
+          }
+        }
+
+        @media (max-width: 520px) {
+          .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .detailGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .localTabs {
+            grid-template-columns: 1fr;
+          }
+
+          .categoryTabs {
+            gap: 8px;
+          }
+
+          .categoryButton {
+            padding: 10px 12px;
+            font-size: 12px;
+          }
+
+          .assetTitle {
+            font-size: 24px;
+          }
+
+          .bigPercent {
+            font-size: 42px;
+          }
+
+          .detailBox {
+            padding: 14px;
+          }
+
+          .mainLogo {
+            height: 70px;
+          }
+        }
       <div className="page">
         <header className="header">
           <div className="brand">
