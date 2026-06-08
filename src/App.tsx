@@ -300,7 +300,7 @@ function AssetPhotos({ asset }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 220px))",
           gap: 14,
           marginTop: 14,
         }}
@@ -324,7 +324,13 @@ function AssetPhotos({ asset }) {
               <img
                 src={photo.dataUrl}
                 alt={`Foto ${photo.index + 1}`}
-                style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: 160,
+                  objectFit: "contain",
+                  display: "block",
+                  background: "rgba(0,0,0,.35)"
+                }}
               />
               <div style={{ padding: 10, color: "#9fb0c9", fontSize: 12, textAlign: "center" }}>
                 Foto {photo.index + 1}
