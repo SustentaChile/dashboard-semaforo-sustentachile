@@ -208,7 +208,7 @@ function HealthBar({ summary }) {
 }
 
 
-function AssetPhotos({ asset }) {
+function AssetPhotos({ asset, onExpandPhoto }) {
   const [photos, setPhotos] = useState([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [photoError, setPhotoError] = useState("");
@@ -307,18 +307,19 @@ function AssetPhotos({ asset }) {
       >
         {photos.map((photo) =>
           photo.ok ? (
-            <a
+            <button
               key={photo.index}
-              href={photo.dataUrl}
-              target="_blank"
-              rel="noreferrer"
+              type="button"
+              onClick={() => setExpandedPhoto(photo)}
               style={{
                 display: "block",
                 border: "1px solid rgba(255,255,255,.12)",
                 borderRadius: 18,
                 overflow: "hidden",
                 background: "rgba(0,0,0,.22)",
-                textDecoration: "none",
+                padding: 0,
+                cursor: "zoom-in",
+                textAlign: "left",
               }}
             >
               <img
@@ -332,10 +333,18 @@ function AssetPhotos({ asset }) {
                   background: "rgba(0,0,0,.35)"
                 }}
               />
-              <div style={{ padding: 10, color: "#9fb0c9", fontSize: 12, textAlign: "center" }}>
-                Foto {photo.index + 1}
+
+              <div
+                style={{
+                  padding: 10,
+                  color: "#9fb0c9",
+                  fontSize: 12,
+                  textAlign: "center",
+                }}
+              >
+                Foto {photo.index + 1} · Presiona para ampliar
               </div>
-            </a>
+            </button>
           ) : (
             <div
               key={photo.index}
@@ -367,6 +376,7 @@ export default function DashboardSemaforo() {
   const [progress, setProgress] = useState("Cargando datos iniciales...");
   const [search, setSearch] = useState("");
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [expandedPhoto, setExpandedPhoto] = useState(null);
   const [pptosData, setPptosData] = useState([]);
   const [allPptosData, setAllPptosData] = useState([]);
   const [pptosLoading, setPptosLoading] = useState(false);
@@ -1170,12 +1180,85 @@ export default function DashboardSemaforo() {
                   <p>{selectedAsset.pendiente || "Sin pendientes registrados."}</p>
                 </div>
 
-                <AssetPhotos asset={selectedAsset} />
+                <AssetPhotos asset={selectedAsset} onExpandPhoto={setExpandedPhoto} />
               </div>
             )}
           </section>
         )}
       </div>
+      
+      {expandedPhoto ? (
+        <div
+          onClick={() => setExpandedPhoto(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.86)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 980,
+              maxHeight: "90vh",
+              background: "#05070d",
+              border: "1px solid rgba(255,255,255,.16)",
+              borderRadius: 24,
+              padding: 16,
+              boxShadow: "0 24px 80px rgba(0,0,0,.55)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ color: "#9fb0c9", fontWeight: 800 }}>
+                Foto {expandedPhoto.index + 1}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setExpandedPhoto(null)}
+                style={{
+                  background: "rgba(255,255,255,.08)",
+                  color: "white",
+                  border: "1px solid rgba(255,255,255,.14)",
+                  borderRadius: 14,
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <img
+              src={expandedPhoto.dataUrl}
+              alt={`Foto ${expandedPhoto.index + 1}`}
+              style={{
+                width: "100%",
+                maxHeight: "78vh",
+                objectFit: "contain",
+                display: "block",
+                background: "rgba(0,0,0,.35)",
+                borderRadius: 16,
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+      
     </div>
   );
 }
