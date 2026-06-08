@@ -207,6 +207,149 @@ function HealthBar({ summary }) {
   );
 }
 
+
+function AssetPhotos({ asset }) {
+  const [photos, setPhotos] = useState([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+
+  function getPhotoPaths(currentAsset) {
+    return [
+      currentAsset?.foto1 || currentAsset?.FOTO_1,
+      currentAsset?.foto2 || currentAsset?.FOTO_2,
+      currentAsset?.foto3 || currentAsset?.FOTO_3,
+    ]
+      .map((path) => String(path || "").trim())
+      .filter(Boolean);
+  }
+
+  useEffect(() => {
+    const paths = getPhotoPaths(asset);
+
+    if (!paths.length) {
+      setPhotos([]);
+      setPhotoError("");
+      return;
+    }
+
+    let active = true;
+
+    async function loadPhotos() {
+      try {
+        setLoadingPhotos(true);
+        setPhotoError("");
+
+        const loaded = await Promise.all(
+          paths.map(async (path, index) => {
+            try {
+              const response = await fetch(`${API_URL}?action=photo&path=${encodeURIComponent(path)}`);
+              const data = await response.json();
+
+              if (!data.ok) {
+                return {
+                  ok: false,
+                  index,
+                  path,
+                  error: data.error || "No se pudo cargar la foto",
+                };
+              }
+
+              return {
+                ok: true,
+                index,
+                path,
+                dataUrl: data.dataUrl,
+                fileName: data.fileName,
+              };
+            } catch (error) {
+              return {
+                ok: false,
+                index,
+                path,
+                error: "No se pudo cargar la foto",
+              };
+            }
+          })
+        );
+
+        if (active) setPhotos(loaded);
+      } catch (error) {
+        if (active) setPhotoError("No se pudieron cargar las fotos.");
+      } finally {
+        if (active) setLoadingPhotos(false);
+      }
+    }
+
+    loadPhotos();
+
+    return () => {
+      active = false;
+    };
+  }, [asset]);
+
+  const paths = getPhotoPaths(asset);
+  if (!paths.length) return null;
+
+  return (
+    <div className="detailBox">
+      <div className="panelTitle" style={{ textAlign: "left" }}>Fotografías</div>
+
+      {loadingPhotos ? <p>Cargando fotos...</p> : null}
+      {photoError ? <p style={{ color: "#ffb6bf" }}>{photoError}</p> : null}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 14,
+          marginTop: 14,
+        }}
+      >
+        {photos.map((photo) =>
+          photo.ok ? (
+            <a
+              key={photo.index}
+              href={photo.dataUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "block",
+                border: "1px solid rgba(255,255,255,.12)",
+                borderRadius: 18,
+                overflow: "hidden",
+                background: "rgba(0,0,0,.22)",
+                textDecoration: "none",
+              }}
+            >
+              <img
+                src={photo.dataUrl}
+                alt={`Foto ${photo.index + 1}`}
+                style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }}
+              />
+              <div style={{ padding: 10, color: "#9fb0c9", fontSize: 12, textAlign: "center" }}>
+                Foto {photo.index + 1}
+              </div>
+            </a>
+          ) : (
+            <div
+              key={photo.index}
+              style={{
+                border: "1px solid rgba(255,66,87,.35)",
+                borderRadius: 18,
+                padding: 14,
+                color: "#ffb6bf",
+                background: "rgba(255,66,87,.08)",
+              }}
+            >
+              No se pudo cargar Foto {photo.index + 1}
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardSemaforo() {
   const [localsData, setLocalsData] = useState([]);
   const [selectedLocal, setSelectedLocal] = useState("TODOS");
@@ -970,34 +1113,14 @@ export default function DashboardSemaforo() {
                         <th>Status</th>
                       </tr>
                     </thead>
-
                     <tbody>
                       {filteredAssets.map((asset, index) => (
-                        <tr
-                          key={`${asset.local}-${asset.section}-${asset.item}-${index}`}
-                          onClick={() => setSelectedAsset(asset)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <td>
-                            <b>{asset.item || asset.descripcion || "Sin descripción"}</b>
-                          </td>
-
-                          <td
-                            style={{
-                              color: getTone(asset.estado).color,
-                              fontWeight: 900,
-                            }}
-                          >
-                            {asset.estado || "Sin estado"}
-                          </td>
+                        <tr key={`${asset.local}-${asset.section}-${asset.item}-${index}`} onClick={() => setSelectedAsset(asset)} style={{ cursor: "pointer" }}>
+                          <td><b>{asset.item || asset.descripcion || "Sin descripción"}</b></td>
+                          <td style={{ color: getTone(asset.estado).color, fontWeight: 900 }}>{asset.estado || "Sin estado"}</td>
                         </tr>
                       ))}
-
-                      {!filteredAssets.length ? (
-                        <tr>
-                          <td colSpan={2}>Sin datos para mostrar.</td>
-                        </tr>
-                      ) : null}
+                      {!filteredAssets.length ? <tr><td colSpan={2}>Sin datos para mostrar.</td></tr> : null}
                     </tbody>
                   </table>
                 </div>
@@ -1041,25 +1164,7 @@ export default function DashboardSemaforo() {
                   <p>{selectedAsset.pendiente || "Sin pendientes registrados."}</p>
                 </div>
 
-                {(selectedAsset.foto1 || selectedAsset.foto2 || selectedAsset.foto3) ? (
-                  <div className="detailBox">
-                    <div className="panelTitle" style={{ textAlign: "left" }}>Fotos</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-                      {[selectedAsset.foto1, selectedAsset.foto2, selectedAsset.foto3].filter(Boolean).map((foto, index) => (
-                        <a
-                          key={index}
-                          href={foto}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="backButton"
-                          style={{ textDecoration: "none", display: "inline-block" }}
-                        >
-                          Foto {index + 1}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+                <AssetPhotos asset={selectedAsset} />
               </div>
             )}
           </section>
