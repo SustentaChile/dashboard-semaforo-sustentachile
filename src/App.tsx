@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useMemo, useState, useEffect } from "react";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyHN_YbDbr6pVzibcd62wgKuqnIS2xyUGIaWiV8XeSYjJ_2RV7mGupuQTit0W23Qpkm/exec";
+const API_URL = "/api/dashboard";
 const PPTOS_API = `${API_URL}?action=pptos`;
 
 const BUSINESS_GROUPS = [
