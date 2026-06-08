@@ -844,10 +844,10 @@ export default function DashboardSemaforo() {
         .localBadge { border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 14px; font-weight: 950; font-size: 13px; background: rgba(255,255,255,.06); }
         .assetTitle { margin: 12px 0 0; font-size: 38px; line-height: 1.1; color: #ffffff; }
         .assetSubtitle { color: #9fb0c9; font-size: 18px; margin-top: 6px; }
-        .detailGrid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 14px; margin: 24px 0; }
-        .detailItem { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 18px; padding: 16px; }
+        .detailGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; margin: 24px 0; }
+        .detailItem { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 18px; padding: 16px; min-width: 0; }
         .detailItem span { display: block; color: #9fb0c9; text-transform: uppercase; letter-spacing: .16em; font-size: 10px; font-weight: 900; margin-bottom: 8px; }
-        .detailItem b { color: white; font-size: 16px; }
+        .detailItem b { color: white; font-size: 16px; word-break: break-word; }
         .detailBox { border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.22); border-radius: 20px; padding: 18px; margin-top: 14px; }
         .detailBox p { margin: 12px 0 0; color: #dce7f7; line-height: 1.5; white-space: pre-wrap; }
         .tableHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
