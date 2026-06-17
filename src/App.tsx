@@ -1283,7 +1283,6 @@ export default function DashboardSemaforo() {
                   <div className="detailItem"><span>Marca compresor</span><b>{selectedAsset.marcaComp || selectedAsset.MARCA_COMP || "N/A"}</b></div>
                   <div className="detailItem"><span>Modelo compresor</span><b>{selectedAsset.modeloComp || selectedAsset.MODELO_COMP || "N/A"}</b></div>
                   <div className="detailItem"><span>Estado</span><b style={{ color: getTone(selectedAsset.estado).color }}>{selectedAsset.estado || "Sin estado"}</b></div>
-                  <div className="detailItem"><span>Técnico</span><b>{selectedAsset.tecnico || selectedAsset.TECNICO || "N/A"}</b></div>
                   <div className="detailItem"><span>Fecha actualización</span><b>{selectedAsset.fechaActualizacion || selectedAsset.FECHA_ACTUALIZACION || "N/A"}</b></div>
                 </div>
                 <div className="detailBox">
